@@ -130,7 +130,8 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	return &s, nil
 }
 
-func (db *CouchDB) ContinuousChanges(c chan DocRev, since int, filter string) *CouchError {
+func (db *CouchDB) ContinuousChanges(c chan *DocRev, since int, filter string) *CouchError {
+	defer close(c)
 	var url string
 	if filter == "" {
 		url = fmt.Sprintf("%s/%s/_changes?feed=continuous&since=%d&heartbeat=30000", db.Host, db.Database, since)
@@ -152,10 +153,10 @@ func (db *CouchDB) ContinuousChanges(c chan DocRev, since int, filter string) *C
 		if err != nil {
 			return regularToCouchError(err)
 		}
-		if seq <= r.Seq {
+		if seq >= r.Seq {
 			return regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was %d, but latest line (%s) from couch has it at %d.", seq, r, r.Seq)))
 		}
-		c <- r
+		c <- &r
 	}
 	return regularToCouchError(os.NewError("This should be impossible to reach, just putting it here to shut up go"))
 }

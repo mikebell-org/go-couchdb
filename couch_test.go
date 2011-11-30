@@ -2,7 +2,8 @@ package couchdb
 
 import (
 	"fmt"
-	"runtime"
+//	"runtime"
+//	"time"
 	"testing"
 )
 
@@ -14,18 +15,17 @@ type testdoc struct {
 
 func TestMain(t *testing.T) {
 	var doc testdoc
+	var change *DocRev
 	doc.Test = "Hello World!"
 	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite")
 	if err != nil {
 		t.Fatalf("Error creating new database for testing: %s.\n Note, tests expect a couch database on 127.0.0.1:5984, anyone have better ideas?", err)
 	}
 	fmt.Printf("Stage 1 complete\n")
+	defer db.Delete()
 
-	c := make(chan DocRev)
+	c := make(chan *DocRev)
 	go db.ContinuousChanges(c, 0, "")
-//	change := <-c
-	runtime.Gosched()
-//	time.Sleep(1)  // Try to ensure the above goroutine gets to run before we start creating docs
 
 	PostSuccess, err := db.PostDocument(doc)
 	if err != nil {
@@ -38,7 +38,7 @@ func TestMain(t *testing.T) {
 		t.Fatalf("Didn't get a DocID back from our POST")
 	}
 	fmt.Printf("Stage 2 complete\n")
-	change := <-c
+	change = <-c
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
