@@ -49,6 +49,7 @@ type CouchSuccess struct {
 type DocRev struct {
 	ID string `json:"id"`
 	Seq   int    `json:"seq"`
+	Doc	map[string]interface{}	`json:"doc"`
 }
 
 

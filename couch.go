@@ -1,8 +1,9 @@
 package couchdb
 
 import (
-	"os"
+	"io"
 	"fmt"
+	"url"
 	"http"
 	"json"
 )
@@ -71,6 +72,22 @@ func (db *CouchDB) Delete() *CouchError {
 	return nil
 }
 
+func (db *CouchDB) GetRawDocument(path string) (io.Reader, *CouchError){
+	url := fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, regularToCouchError(err)
+	}
+	r, err := client.Do(req)
+	if err != nil {
+		return nil, regularToCouchError(err)
+	}
+	if r.StatusCode >= 400 {
+		return nil, responseToCouchError(r)
+	}
+	return r.Body, nil
+}
+
 func (db *CouchDB) GetDocument(doc interface{}, path string) *CouchError {
 	return db.get(doc, path)
 }
@@ -130,33 +147,34 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	return &s, nil
 }
 
-func (db *CouchDB) ContinuousChanges(c chan *DocRev, since int, filter string) *CouchError {
-	defer close(c)
-	var url string
-	if filter == "" {
-		url = fmt.Sprintf("%s/%s/_changes?feed=continuous&since=%d&heartbeat=30000", db.Host, db.Database, since)
-	} else {
-		url = fmt.Sprintf("%s/%s/_changes?feed=continuous&since=%d&filter=%s&heartbeat=30000", db.Host, db.Database, since, filter)
-	}
+func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError) {
+	c := make(chan *DocRev)
+	args.Set("feed", "continuous")
+	url := fmt.Sprintf("%s/%s/_changes?%s", db.Host, db.Database, args.Encode())
 	r, err := http.Get(url)
 	if err != nil {
-		return regularToCouchError(err)
+		return nil, regularToCouchError(err)
 	}
 	if r.StatusCode != 200 {
-		return responseToCouchError(r)
+		return nil, responseToCouchError(r)
 	}
 	j := json.NewDecoder(r.Body)
-	seq := since
-	for {
-		var r DocRev
-		err := j.Decode(&r)
-		if err != nil {
-			return regularToCouchError(err)
+	go func(){
+		defer close(c)
+		defer r.Body.Close()
+		for {
+			var r DocRev
+			err := j.Decode(&r)
+			if err != nil {
+				fmt.Printf("Error in json decoding: %s\n", err)
+				return // nil, regularToCouchError(err)
+			}
+			if r.Seq == 0 {
+				fmt.Printf("r.Seq == 0\n")
+				return // nil, regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq)))
+			}
+			c <- &r
 		}
-		if seq >= r.Seq {
-			return regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was %d, but latest line (%s) from couch has it at %d.", seq, r, r.Seq)))
-		}
-		c <- &r
-	}
-	return regularToCouchError(os.NewError("This should be impossible to reach, just putting it here to shut up go"))
+	}()
+	return c, nil //regularToCouchError(os.NewError("This should be impossible to reach, just putting it here to shut up go"))
 }

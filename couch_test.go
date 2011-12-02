@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"fmt"
+	"url"
 //	"runtime"
 //	"time"
 	"testing"
@@ -19,13 +20,16 @@ func TestMain(t *testing.T) {
 	doc.Test = "Hello World!"
 	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite")
 	if err != nil {
-		t.Fatalf("Error creating new database for testing: %s.\n Note, tests expect a couch database on 127.0.0.1:5984, anyone have better ideas?", err)
+		t.Fatalf("Error creating new database for testing: %s.\nNote, tests expect a couch database on 127.0.0.1:5984, anyone have better ideas?", err)
 	}
 	fmt.Printf("Stage 1 complete\n")
 	defer db.Delete()
 
-	c := make(chan *DocRev)
-	go db.ContinuousChanges(c, 0, "")
+//	c := make(chan *DocRev)
+	args := make(url.Values)
+	args.Set("keepalive", "30000")
+	args.Set("since", "0")
+	c, err := db.ContinuousChanges(args)
 
 	PostSuccess, err := db.PostDocument(doc)
 	if err != nil {

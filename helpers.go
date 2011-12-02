@@ -7,6 +7,8 @@ import (
 	"json"
 )
 
+var client http.Client
+
 func jsonifyDoc(doc interface{}) (io.Reader, chan os.Error) {
 	errCh := make(chan os.Error)
 	r, w := io.Pipe()
@@ -21,8 +23,7 @@ func jsonifyDoc(doc interface{}) (io.Reader, chan os.Error) {
 }
 
 func couchDo(req *http.Request, response interface{}) (int, *CouchError) {
-	var c http.Client
-	r, err := c.Do(req)
+	r, err := client.Do(req)
 	if err != nil {
 		return 0, regularToCouchError(err)
 	}
