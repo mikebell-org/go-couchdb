@@ -72,7 +72,7 @@ func (db *CouchDB) Delete() *CouchError {
 	return nil
 }
 
-func (db *CouchDB) GetRawDocument(path string) (io.Reader, *CouchError){
+func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError){
 	url := fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -145,6 +145,15 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 		// FIXME Unexpected code. Do something?
 	}
 	return &s, nil
+}
+
+func (db *CouchDB) View(design, view string, args url.Values) (map[string]interface{}, *CouchError) {
+	var m map[string]interface{}
+	cerr := db.GetDocument(&m, fmt.Sprintf("_design/%s/_view/%s", design, view, args))
+	if cerr != nil {
+		return nil, cerr
+	}
+	return m, nil
 }
 
 func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError) {
