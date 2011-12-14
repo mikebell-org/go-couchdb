@@ -52,4 +52,8 @@ type DocRev struct {
 	Doc	map[string]interface{}	`json:"doc"`
 }
 
-
+type ViewResults struct {
+	TotalRows int `json:"total_rows"`
+	Offset int `json:"offset"`
+	Rows	[]map[string]interface{} `json:"rows"`
+}

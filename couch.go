@@ -147,13 +147,13 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	return &s, nil
 }
 
-func (db *CouchDB) View(design, view string, args url.Values) (map[string]interface{}, *CouchError) {
-	var m map[string]interface{}
-	cerr := db.GetDocument(&m, fmt.Sprintf("_design/%s/_view/%s", design, view, args))
+func (db *CouchDB) View(design, view string, args url.Values) (results *ViewResults, cerr *CouchError) {
+	results = new(ViewResults)
+	cerr = db.GetDocument(results, fmt.Sprintf("_design/%s/_view/%s?%s", design, view, args.Encode()))
 	if cerr != nil {
 		return nil, cerr
 	}
-	return m, nil
+	return
 }
 
 func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError) {
