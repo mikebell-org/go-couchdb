@@ -62,6 +62,6 @@ type ViewRow struct {
 	ID    string                 `json:"id"`
 	Rev   string                 `json:"rev"`
 	Key   string                 `json:"key"`
-	Value string                 `json:"value"`
+	Value interface{}            `json:"value"`
 	Doc   map[string]interface{} `json:"doc"`
 }
