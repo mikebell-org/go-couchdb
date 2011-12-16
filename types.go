@@ -47,13 +47,21 @@ type CouchSuccess struct {
 }
 
 type DocRev struct {
-	ID string `json:"id"`
-	Seq   int    `json:"seq"`
-	Doc	map[string]interface{}	`json:"doc"`
+	ID  string                 `json:"id"`
+	Seq int                    `json:"seq"`
+	Doc map[string]interface{} `json:"doc"`
 }
 
 type ViewResults struct {
 	TotalRows int `json:"total_rows"`
-	Offset int `json:"offset"`
-	Rows	[]map[string]interface{} `json:"rows"`
+	Offset    int `json:"offset"`
+	Rows      []ViewRow
+}
+
+type ViewRow struct {
+	ID    string                 `json:"id"`
+	Rev   string                 `json:"rev"`
+	Key   string                 `json:"key"`
+	Value string                 `json:"value"`
+	Doc   map[string]interface{} `json:"doc"`
 }

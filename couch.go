@@ -72,7 +72,7 @@ func (db *CouchDB) Delete() *CouchError {
 	return nil
 }
 
-func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError){
+func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError) {
 	url := fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -168,7 +168,7 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 		return nil, responseToCouchError(r)
 	}
 	j := json.NewDecoder(r.Body)
-	go func(){
+	go func() {
 		defer close(c)
 		defer r.Body.Close()
 		for {

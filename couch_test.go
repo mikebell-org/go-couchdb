@@ -3,8 +3,8 @@ package couchdb
 import (
 	"fmt"
 	"url"
-//	"runtime"
-//	"time"
+	//	"runtime"
+	//	"time"
 	"testing"
 )
 
@@ -25,7 +25,7 @@ func TestMain(t *testing.T) {
 	fmt.Printf("Stage 1 complete\n")
 	defer db.Delete()
 
-//	c := make(chan *DocRev)
+	//	c := make(chan *DocRev)
 	args := make(url.Values)
 	args.Set("keepalive", "30000")
 	args.Set("since", "0")
