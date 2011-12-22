@@ -27,6 +27,7 @@ func couchDo(req *http.Request, response interface{}) (int, *CouchError) {
 	if err != nil {
 		return 0, regularToCouchError(err)
 	}
+	defer r.Body.Close()
 	if r.StatusCode >= 300 {
 		return r.StatusCode, responseToCouchError(r)
 	}
