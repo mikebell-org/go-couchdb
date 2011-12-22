@@ -165,6 +165,7 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 		return nil, regularToCouchError(err)
 	}
 	if r.StatusCode != 200 {
+		r.Body.Close()
 		return nil, responseToCouchError(r)
 	}
 	j := json.NewDecoder(r.Body)
