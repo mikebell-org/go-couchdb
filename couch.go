@@ -188,3 +188,40 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 	}()
 	return c, nil //regularToCouchError(os.NewError("This should be impossible to reach, just putting it here to shut up go"))
 }
+
+func (db *CouchDB) Info()(info *CouchInfo, cerr *CouchError){
+	info = new(CouchInfo)
+	cerr = db.GetDocument(&info, "")
+	if cerr != nil{
+		return
+	}
+	return
+}
+
+func (db *CouchDB) Compact()(cerr *CouchError){
+	var s CouchSuccess
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_compact", db.Host, db.Database), nil)
+	if err != nil {
+		return regularToCouchError(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	_, cerr = couchDo(req, &s)
+	if cerr != nil {
+		return cerr
+	}
+	return nil
+}
+
+func (db *CouchDB) CompactView(designdoc string)(cerr *CouchError){
+	var s CouchSuccess
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_compact/%s", db.Host, db.Database, designdoc), nil)
+	if err != nil {
+		return regularToCouchError(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	_, cerr = couchDo(req, &s)
+	if cerr != nil {
+		return cerr
+	}
+	return nil
+}
