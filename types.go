@@ -47,33 +47,49 @@ type CouchSuccess struct {
 }
 
 type CouchInfo struct {
-	Name	string	`json:"db_name"`
-	DocCount	int	`json:"doc_count"`
-	DocDelCount	int	`json:"doc_del_count"`
-	UpdateSeq	int	`json:"update_seq"`
-	PurgeSeq	int	`json:"purge_seq"`
-	CompactRunning	bool	`json:"compact_running"`
-	DiskSize	int	`json:"disk_size"`
-	InstanceStartTime	string	`json:"instance_start_time"`
-	DiskFormatVersion	int	`json:"disk_format_version"`
-	CommittedUpdateSeq	int	`json:"committed_update_seq"`
+	Name               string `json:"db_name"`
+	DocCount           int    `json:"doc_count"`
+	DocDelCount        int    `json:"doc_del_count"`
+	UpdateSeq          int    `json:"update_seq"`
+	PurgeSeq           int    `json:"purge_seq"`
+	CompactRunning     bool   `json:"compact_running"`
+	DiskSize           int    `json:"disk_size"`
+	InstanceStartTime  string `json:"instance_start_time"`
+	DiskFormatVersion  int    `json:"disk_format_version"`
+	CommittedUpdateSeq int    `json:"committed_update_seq"`
 }
 
 type DocRev struct {
-	ID  string                 `json:"id"`
-	Seq int                    `json:"seq"`
-	Doc map[string]interface{} `json:"doc"`
+	ID  string        `json:"id"`
+	Seq int           `json:"seq"`
+	Doc CouchDocument `json:"doc"`
 }
 
 type ViewResults struct {
 	TotalRows int `json:"total_rows"`
 	Offset    int `json:"offset"`
+	UpdateSeq int `json:"update_seq"`
 	Rows      []ViewRow
 }
 
 type ViewRow struct {
-	ID    string                 `json:"id"`
-	Key   interface{}            `json:"key"`
-	Value interface{}            `json:"value"`
-	Doc   map[string]interface{} `json:"doc"`
+	ID    string        `json:"id"`
+	Key   interface{}   `json:"key"`
+	Value interface{}   `json:"value"`
+	Doc   CouchDocument `json:"doc"`
 }
+
+type BulkCommitResponseRow struct {
+	ID     string `json:"id"`
+	Rev    string `json:"rev"`
+	Error  string `json:"error"`
+	Reason string `json:"reason"`
+}
+
+type BulkCommitResponse []BulkCommitResponseRow
+
+type BulkCommit struct {
+	Docs []CouchDocument `json:"docs"`
+}
+
+type CouchDocument map[string]interface{}
