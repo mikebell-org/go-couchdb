@@ -89,7 +89,8 @@ type BulkCommitResponseRow struct {
 type BulkCommitResponse []BulkCommitResponseRow
 
 type BulkCommit struct {
-	Docs []CouchDocument `json:"docs"`
+	AllOrNothing bool            `json:"all_or_nothing,omitempty"`
+	Docs         []CouchDocument `json:"docs"`
 }
 
 type CouchDocument map[string]interface{}

@@ -131,6 +131,28 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
 	return &s, nil
 }
 
+func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) {
+	var s BulkCommitResponse
+	r, errCh := jsonifyDoc(c)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_bulk_docs", db.Host, db.Database), r)
+	if err != nil {
+		return nil, regularToCouchError(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	code, cerr := couchDo(req, &s)
+	if cerr != nil {
+		return nil, cerr
+	}
+	if err = <-errCh; err != nil {
+		return nil, regularToCouchError(err)
+	}
+	if code != 201 {
+		// FIXME Unexpected code. Do something?
+	}
+	return &s, nil
+
+}
+
 func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError) {
 	var s CouchSuccess
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/%s?rev=%s", db.Host, db.Database, path, rev), nil)
