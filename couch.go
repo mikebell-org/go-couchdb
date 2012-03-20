@@ -42,6 +42,9 @@ type CouchDB struct {
 }
 
 func (db *CouchDB) get(doc interface{}, path string) *CouchError {
+	if path[0] == '/' {
+		path = path[1:]
+	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path), nil)
 	if err != nil {
 		return regularToCouchError(err)
