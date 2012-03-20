@@ -6,6 +6,8 @@ import (
 	"url"
 	"http"
 	"json"
+	"path"
+	"strings"
 )
 
 func Database(host, database string) (db *CouchDB, err *CouchError) {
@@ -41,11 +43,18 @@ type CouchDB struct {
 	Database string
 }
 
-func (db *CouchDB) get(doc interface{}, path string) *CouchError {
-	if path[0] == '/' {
-		path = path[1:]
+func clean_url(url string)(string){
+	if strings.HasPrefix(url, "http://") {
+		return "http://" + path.Clean(url[7:])
+	} else {
+		return path.Clean(url)
 	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path), nil)
+	panic("Shouldn't reach this spot")
+}
+
+func (db *CouchDB) get(doc interface{}, path string) *CouchError {
+	url := clean_url(fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path))
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return regularToCouchError(err)
 	}
