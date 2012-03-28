@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"io"
+	"os"
 	"fmt"
 	"url"
 	"http"
@@ -10,21 +11,22 @@ import (
 	"strings"
 )
 
-func Database(host, database string) (db *CouchDB, err *CouchError) {
+func Database(host, database, username, password string) (db *CouchDB, err *CouchError) {
 	db = new(CouchDB)
 	db.Host = host
 	db.Database = database
+	db.Username = username
+	db.Password = password
 	return db, nil
 }
 
-func CreateDatabase(host, database string) (*CouchDB, *CouchError) {
+func CreateDatabase(host, database, username, password string) (*CouchDB, *CouchError) {
 	var s CouchSuccess
-	url := fmt.Sprintf("%s/%s", host, database)
-	db, cerr := Database(host, database)
+	db, cerr := Database(host, database, username, password)
 	if cerr != nil {
 		return nil, cerr
 	}
-	req, err := http.NewRequest("PUT", url, nil)
+	req, err := db.request("PUT", "", nil)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -41,20 +43,35 @@ func CreateDatabase(host, database string) (*CouchDB, *CouchError) {
 type CouchDB struct {
 	Host     string
 	Database string
+	Username string
+	Password string
 }
 
-func clean_url(url string)(string){
-	if strings.HasPrefix(url, "http://") {
-		return "http://" + path.Clean(url[7:])
-	} else {
-		return path.Clean(url)
+func (db *CouchDB) request(method, urlpath string, body io.Reader) (r *http.Request, err os.Error) {
+	clean_url := func(url string) string {
+		if strings.HasPrefix(url, "http://") {
+			return "http://" + path.Clean(url[7:])
+		} else if strings.HasPrefix(url, "https://") {
+			return "https://" + path.Clean(url[8:])
+		} else {
+			return path.Clean(url)
+		}
+		panic("Shouldn't reach this spot")
 	}
-	panic("Shouldn't reach this spot")
+
+	url := clean_url(fmt.Sprintf("%s/%s/%s", db.Host, db.Database, urlpath))
+	r, err = http.NewRequest(method, url, body)
+	if err != nil {
+		return
+	}
+	if db.Username != "" {
+		r.SetBasicAuth(db.Username, db.Password)
+	}
+	return
 }
 
 func (db *CouchDB) get(doc interface{}, path string) *CouchError {
-	url := clean_url(fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path))
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := db.request("GET", path, nil)
 	if err != nil {
 		return regularToCouchError(err)
 	}
@@ -69,8 +86,7 @@ func (db *CouchDB) get(doc interface{}, path string) *CouchError {
 }
 
 func (db *CouchDB) Delete() *CouchError {
-	url := fmt.Sprintf("%s/%s", db.Host, db.Database)
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := db.request("DELETE", "", nil)
 	if err != nil {
 		return regularToCouchError(err)
 	}
@@ -85,8 +101,7 @@ func (db *CouchDB) Delete() *CouchError {
 }
 
 func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError) {
-	url := fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := db.request("GET", path, nil)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -107,7 +122,7 @@ func (db *CouchDB) GetDocument(doc interface{}, path string) *CouchError {
 func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, *CouchError) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/%s/%s", db.Host, db.Database, path), r)
+	req, err := db.request("PUT", path, r)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -125,7 +140,7 @@ func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, *Co
 func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/", db.Host, db.Database), r)
+	req, err := db.request("POST", "", r)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -146,7 +161,7 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
 func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) {
 	var s BulkCommitResponse
 	r, errCh := jsonifyDoc(c)
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_bulk_docs", db.Host, db.Database), r)
+	req, err := db.request("POST", "_bulk_docs", r)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -167,7 +182,7 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) 
 
 func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError) {
 	var s CouchSuccess
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/%s?rev=%s", db.Host, db.Database, path, rev), nil)
+	req, err := db.request("DELETE", fmt.Sprintf("%s?rev=%s", path, rev), nil)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
@@ -193,7 +208,7 @@ func (db *CouchDB) View(design, view string, args url.Values) (results *ViewResu
 func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError) {
 	c := make(chan *DocRev)
 	args.Set("feed", "continuous")
-	url := fmt.Sprintf("%s/%s/_changes?%s", db.Host, db.Database, args.Encode())
+	url := fmt.Sprintf("_changes?%s", args.Encode())
 	r, err := http.Get(url)
 	if err != nil {
 		return nil, regularToCouchError(err)
@@ -234,7 +249,7 @@ func (db *CouchDB) Info() (info *CouchInfo, cerr *CouchError) {
 
 func (db *CouchDB) Compact() (cerr *CouchError) {
 	var s CouchSuccess
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_compact", db.Host, db.Database), nil)
+	req, err := db.request("POST", "_compact", nil)
 	if err != nil {
 		return regularToCouchError(err)
 	}
@@ -248,7 +263,7 @@ func (db *CouchDB) Compact() (cerr *CouchError) {
 
 func (db *CouchDB) CompactView(designdoc string) (cerr *CouchError) {
 	var s CouchSuccess
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s/_compact/%s", db.Host, db.Database, designdoc), nil)
+	req, err := db.request("POST", fmt.Sprintf("_compact/%s", designdoc), nil)
 	if err != nil {
 		return regularToCouchError(err)
 	}

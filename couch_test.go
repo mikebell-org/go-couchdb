@@ -18,7 +18,7 @@ func TestMain(t *testing.T) {
 	var doc testdoc
 	var change *DocRev
 	doc.Test = "Hello World!"
-	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite")
+	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite", "", "")
 	if err != nil {
 		t.Fatalf("Error creating new database for testing: %s.\nNote, tests expect a couch database on 127.0.0.1:5984, anyone have better ideas?", err)
 	}
