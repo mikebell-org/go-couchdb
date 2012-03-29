@@ -209,7 +209,11 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 	c := make(chan *DocRev)
 	args.Set("feed", "continuous")
 	url := fmt.Sprintf("_changes?%s", args.Encode())
-	r, err := http.Get(url)
+	req, err := db.request("GET", url, nil)
+	if err != nil {
+		return nil, regularToCouchError(err)
+	}
+	r, err := client.Do(req)
 	if err != nil {
 		return nil, regularToCouchError(err)
 	}
