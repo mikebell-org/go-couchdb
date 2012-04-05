@@ -50,7 +50,7 @@ type CouchInfo struct {
 	Name               string `json:"db_name"`
 	DocCount           int    `json:"doc_count"`
 	DocDelCount        int    `json:"doc_del_count"`
-	UpdateSeq          int    `json:"update_seq"`
+	UpdateSeq          interface{}    `json:"update_seq"`
 	PurgeSeq           int    `json:"purge_seq"`
 	CompactRunning     bool   `json:"compact_running"`
 	DiskSize           int    `json:"disk_size"`
@@ -61,7 +61,7 @@ type CouchInfo struct {
 
 type DocRev struct {
 	ID  string        `json:"id"`
-	Seq int           `json:"seq"`
+	Seq interface{}   `json:"seq"`
 	Doc CouchDocument `json:"doc"`
 }
 
