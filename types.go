@@ -47,22 +47,26 @@ type CouchSuccess struct {
 }
 
 type CouchInfo struct {
-	Name               string `json:"db_name"`
-	DocCount           int    `json:"doc_count"`
-	DocDelCount        int    `json:"doc_del_count"`
-	UpdateSeq          interface{}    `json:"update_seq"`
-	PurgeSeq           int    `json:"purge_seq"`
-	CompactRunning     bool   `json:"compact_running"`
-	DiskSize           int    `json:"disk_size"`
-	InstanceStartTime  string `json:"instance_start_time"`
-	DiskFormatVersion  int    `json:"disk_format_version"`
-	CommittedUpdateSeq int    `json:"committed_update_seq"`
+	Name               string      `json:"db_name"`
+	DocCount           int         `json:"doc_count"`
+	DocDelCount        int         `json:"doc_del_count"`
+	UpdateSeq          interface{} `json:"update_seq"`
+	PurgeSeq           int         `json:"purge_seq"`
+	CompactRunning     bool        `json:"compact_running"`
+	DiskSize           int         `json:"disk_size"`
+	InstanceStartTime  string      `json:"instance_start_time"`
+	DiskFormatVersion  int         `json:"disk_format_version"`
+	CommittedUpdateSeq int         `json:"committed_update_seq"`
 }
 
+// {"seq":"15906810-g1AAAAXReJyV1DlIA0EUBuBFrWJhId5oJFoEi2C80Eob7_t4tWSywRBCApqIjYittdp4xPuY3lZbsbcTxFYU8Yi3jv9Mt83K2-Zv9oP5581M3LKs0miubflsEU5ORzps0RqIJlPRSMiurw8GwvFk2g4lUoFEJBXHvzkhS3ikPI4Jy1N254RNrlAzKYqIxrWtPnfaBncLNiG8Sv1oWzPrtEF3C_Yr6qQ81Nabwymr2ZFoJhrVttTP6gs2JtqV-tK2opDVF-xb9Em5r60_n9UX7EAQ0bBZs9dp29wt2IiYVOrDrHmZ1RfsU8Sk3DVnY5XVF2xPpIkGta2cYvUFGxILSr0Z28LqC_aeyLO2pVzSuirIaQy4A4joJ1rRvnie0xpwABCRVSpjdu2K0xzwFRCRwdXSvvyUc7oBtwARvUQn2tcWMPv3ASKelTozt_rG6Rv_8y-AiA0pL8z-LzL7bwIiuokutS954EwfsAcQ8ajUtXkdfMz-T4CINSlvzY2ZY85_HRDRSZQ1879n9u8CRCh8Zv9mYn9OHvC1","id":"1cab9146e8abf70e3387d22016294bae:68793e573e9404163cfeff8e3d5a98dd","changes":[{"rev":"2-490b51dbd75b248d4b519c01742bf237"}],"deleted":true},
+
 type DocRev struct {
-	ID  string        `json:"id"`
-	Seq interface{}   `json:"seq"`
-	Doc CouchDocument `json:"doc"`
+	ID      string        `json:"id"`
+	Seq     interface{}   `json:"seq"`
+	Doc     CouchDocument `json:"doc"`
+	Deleted bool          `json:"deleted"`
+	//	Changes []something
 }
 
 type ViewResults struct {
