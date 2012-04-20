@@ -31,8 +31,11 @@ type CouchError struct {
 	Reason     string `json:"reason"`
 }
 
-func (c *CouchError) Error() (errstring string) {
+func (c *CouchError) Error() (string) {
 	if c.ReturnCode == 0 {
+		if c.Err == ""{
+			panic("Internal error in couchdb library, c.ReturnCode == 0 and c.Err == \"\"")
+		}
 		return c.Err
 	}
 	return fmt.Sprintf("URL: %s, HTTP response: %d, Error: %s, Reason: %s", c.URL, c.ReturnCode, c.Err, c.Reason)
