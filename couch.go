@@ -72,15 +72,18 @@ func (db *CouchDB) request(method, urlpath string, body io.Reader) (r *http.Requ
 func (db *CouchDB) get(doc interface{}, path string) *CouchError {
 	req, err := db.request("GET", path, nil)
 	if err != nil {
+		fmt.Printf("go-couchdb: Failed creating request: %s\n", err)
 		return regularToCouchError(err)
 	}
 	code, cerr := couchDo(req, doc)
 	if cerr != nil {
+		fmt.Printf("go-couchdb: Failed in couchDo: %s\n", cerr)
 		return cerr
 	}
 	if code != 200 {
 		// FIXME Unexpected code. Do something?
 	}
+	fmt.Printf("go-couchdb: Successfully got document\n")
 	return nil
 }
 
