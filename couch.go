@@ -183,15 +183,18 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	var s CouchSuccess
 	req, err := db.request("DELETE", fmt.Sprintf("%s?rev=%s", path, rev), nil)
 	if err != nil {
+		fmt.Printf("Returning error from request creation: %s\n", err)
 		return nil, regularToCouchError(err)
 	}
 	code, cerr := couchDo(req, &s)
 	if cerr != nil {
+		fmt.Printf("Error in couchDo: %s\n", cerr)
 		return nil, cerr
 	}
 	if code != 200 {
 		// FIXME Unexpected code. Do something?
 	}
+	fmt.Printf("Deleted successfully\n")
 	return &s, nil
 }
 
