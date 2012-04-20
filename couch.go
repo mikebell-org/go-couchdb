@@ -1,11 +1,11 @@
 package couchdb
 
 import (
-	"io"
+	"encoding/json"
 	"fmt"
-	"url"
-	"http"
-	"json"
+	"io"
+	"net/http"
+	"net/url"
 )
 
 func Database(host, database string) (db *CouchDB, err *CouchError) {

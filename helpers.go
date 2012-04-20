@@ -1,16 +1,15 @@
 package couchdb
 
 import (
+	"encoding/json"
 	"io"
-	"os"
-	"http"
-	"json"
+	"net/http"
 )
 
 var client http.Client
 
-func jsonifyDoc(doc interface{}) (io.Reader, chan os.Error) {
-	errCh := make(chan os.Error)
+func jsonifyDoc(doc interface{}) (io.Reader, chan error) {
+	errCh := make(chan error)
 	r, w := io.Pipe()
 	go func() {
 		j := json.NewEncoder(w)

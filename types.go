@@ -1,15 +1,14 @@
 package couchdb
 
 import (
-	"os"
+	"encoding/json"
 	"fmt"
-	"http"
-	"json"
+	"net/http"
 )
 
-func regularToCouchError(err os.Error) (e *CouchError) {
+func regularToCouchError(err error) (e *CouchError) {
 	e = new(CouchError)
-	e.Error = err.String()
+	e.Err = err.Error()
 	return e
 }
 
@@ -20,7 +19,7 @@ func responseToCouchError(r *http.Response) (e *CouchError) {
 	j := json.NewDecoder(r.Body)
 	err := j.Decode(e)
 	if err != nil {
-		e.Error = err.String()
+		e.Err = err.Error()
 	}
 	return e
 }
@@ -28,15 +27,15 @@ func responseToCouchError(r *http.Response) (e *CouchError) {
 type CouchError struct {
 	ReturnCode int
 	URL        string
-	Error      string `json:"error"`
+	Err        string `json:"error"`
 	Reason     string `json:"reason"`
 }
 
-func (c *CouchError) String() (errstring string) {
+func (c *CouchError) Error() (errstring string) {
 	if c.ReturnCode == 0 {
-		return c.Error
+		return c.Err
 	}
-	return fmt.Sprintf("URL: %s, HTTP response: %d, Error: %s, Reason: %s", c.URL, c.ReturnCode, c.Error, c.Reason)
+	return fmt.Sprintf("URL: %s, HTTP response: %d, Error: %s, Reason: %s", c.URL, c.ReturnCode, c.Err, c.Reason)
 }
 
 type CouchSuccess struct {

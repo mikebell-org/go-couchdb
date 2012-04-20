@@ -2,7 +2,7 @@ package couchdb
 
 import (
 	"fmt"
-	"url"
+	"net/url"
 	//	"runtime"
 	//	"time"
 	"testing"
