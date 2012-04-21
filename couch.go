@@ -72,18 +72,15 @@ func (db *CouchDB) request(method, urlpath string, body io.Reader) (r *http.Requ
 func (db *CouchDB) get(doc interface{}, path string) *CouchError {
 	req, err := db.request("GET", path, nil)
 	if err != nil {
-		fmt.Printf("go-couchdb: Failed creating request: %s\n", err)
 		return regularToCouchError(err)
 	}
 	code, cerr := couchDo(req, doc)
 	if cerr != nil {
-		fmt.Printf("go-couchdb: Failed in couchDo: %s\n", cerr)
 		return cerr
 	}
 	if code != 200 {
 		// FIXME Unexpected code. Do something?
 	}
-	fmt.Printf("go-couchdb: Successfully got document\n")
 	return nil
 }
 
@@ -186,18 +183,15 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	var s CouchSuccess
 	req, err := db.request("DELETE", fmt.Sprintf("%s?rev=%s", path, rev), nil)
 	if err != nil {
-		fmt.Printf("Returning error from request creation: %s\n", err)
 		return nil, regularToCouchError(err)
 	}
 	code, cerr := couchDo(req, &s)
 	if cerr != nil {
-		fmt.Printf("Error in couchDo: %s\n", cerr)
 		return nil, cerr
 	}
 	if code != 200 {
 		// FIXME Unexpected code. Do something?
 	}
-	fmt.Printf("Deleted successfully\n")
 	return &s, nil
 }
 
@@ -232,13 +226,11 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 		defer r.Body.Close()
 		for {
 			var r DocRev
-			err := j.Decode(&r)
-			if err != nil {
-				fmt.Printf("Error in json decoding: %s\n", err)
+			if err := j.Decode(&r); err != nil {
 				return // nil, regularToCouchError(err)
 			}
 			if r.Seq == 0 {
-				fmt.Printf("r.Seq == 0\n")
+//				fmt.Printf("r.Seq == 0\n")
 				return // nil, regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq)))
 			}
 			c <- &r
