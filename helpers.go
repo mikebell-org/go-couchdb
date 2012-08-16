@@ -21,10 +21,10 @@ func jsonifyDoc(doc interface{}) (io.Reader, chan error) {
 	return r, errCh
 }
 
-func couchDo(req *http.Request, response interface{}) (int, *CouchError) {
+func couchDo(req *http.Request, response interface{}) (int, error) {
 	r, err := client.Do(req)
 	if err != nil {
-		return 0, regularToCouchError(err)
+		return 0, err
 	}
 	defer r.Body.Close()
 	if r.StatusCode >= 300 {
@@ -34,7 +34,7 @@ func couchDo(req *http.Request, response interface{}) (int, *CouchError) {
 		j := json.NewDecoder(r.Body)
 		err = j.Decode(response)
 		if err != nil {
-			return r.StatusCode, regularToCouchError(err)
+			return r.StatusCode, err
 		}
 	}
 	return r.StatusCode, nil

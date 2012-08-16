@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Database(host, database, username, password string) (db *CouchDB, err *CouchError) {
+func Database(host, database, username, password string) (db *CouchDB, err error) {
 	db = new(CouchDB)
 	db.Host = host
 	db.Database = database
@@ -19,7 +19,7 @@ func Database(host, database, username, password string) (db *CouchDB, err *Couc
 	return db, nil
 }
 
-func CreateDatabase(host, database, username, password string) (*CouchDB, *CouchError) {
+func CreateDatabase(host, database, username, password string) (*CouchDB, error) {
 	var s CouchSuccess
 	db, cerr := Database(host, database, username, password)
 	if cerr != nil {
@@ -27,7 +27,7 @@ func CreateDatabase(host, database, username, password string) (*CouchDB, *Couch
 	}
 	req, err := db.request("PUT", "", nil)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	code, cerr := couchDo(req, &s)
 	if cerr != nil {
@@ -69,10 +69,10 @@ func (db *CouchDB) request(method, urlpath string, body io.Reader) (r *http.Requ
 	return
 }
 
-func (db *CouchDB) get(doc interface{}, path string) *CouchError {
+func (db *CouchDB) get(doc interface{}, path string) error {
 	req, err := db.request("GET", path, nil)
 	if err != nil {
-		return regularToCouchError(err)
+		return err
 	}
 	code, cerr := couchDo(req, doc)
 	if cerr != nil {
@@ -84,10 +84,10 @@ func (db *CouchDB) get(doc interface{}, path string) *CouchError {
 	return nil
 }
 
-func (db *CouchDB) Delete() *CouchError {
+func (db *CouchDB) Delete() error {
 	req, err := db.request("DELETE", "", nil)
 	if err != nil {
-		return regularToCouchError(err)
+		return err
 	}
 	code, cerr := couchDo(req, nil)
 	if cerr != nil {
@@ -99,14 +99,14 @@ func (db *CouchDB) Delete() *CouchError {
 	return nil
 }
 
-func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError) {
+func (db *CouchDB) GetRaw(path string) (io.Reader, error) {
 	req, err := db.request("GET", path, nil)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	r, err := client.Do(req)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	if r.StatusCode >= 400 {
 		return nil, responseToCouchError(r)
@@ -114,16 +114,16 @@ func (db *CouchDB) GetRaw(path string) (io.Reader, *CouchError) {
 	return r.Body, nil
 }
 
-func (db *CouchDB) GetDocument(doc interface{}, path string) *CouchError {
+func (db *CouchDB) GetDocument(doc interface{}, path string) error {
 	return db.get(doc, path)
 }
 
-func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, *CouchError) {
+func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
 	req, err := db.request("PUT", path, r)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	_, cerr := couchDo(req, &s)
@@ -131,17 +131,17 @@ func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, *Co
 		return nil, cerr
 	}
 	if err := <-errCh; err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	return &s, nil
 }
 
-func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
+func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
 	req, err := db.request("POST", "", r)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	code, cerr := couchDo(req, &s)
@@ -149,7 +149,7 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
 		return nil, cerr
 	}
 	if err = <-errCh; err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	if code != 201 {
 		// FIXME Unexpected code. Do something?
@@ -157,12 +157,12 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, *CouchError) {
 	return &s, nil
 }
 
-func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) {
+func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	var s BulkCommitResponse
 	r, errCh := jsonifyDoc(c)
 	req, err := db.request("POST", "_bulk_docs", r)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	code, cerr := couchDo(req, &s)
@@ -170,7 +170,7 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) 
 		return nil, cerr
 	}
 	if err = <-errCh; err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	if code != 201 {
 		// FIXME Unexpected code. Do something?
@@ -179,11 +179,11 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, *CouchError) 
 
 }
 
-func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError) {
+func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	req, err := db.request("DELETE", fmt.Sprintf("%s?rev=%s", path, rev), nil)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	code, cerr := couchDo(req, &s)
 	if cerr != nil {
@@ -195,7 +195,7 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, *CouchError)
 	return &s, nil
 }
 
-func (db *CouchDB) View(design, view string, args url.Values) (results *ViewResults, cerr *CouchError) {
+func (db *CouchDB) View(design, view string, args url.Values) (results *ViewResults, cerr error) {
 	results = new(ViewResults)
 	cerr = db.GetDocument(results, fmt.Sprintf("_design/%s/_view/%s?%s", design, view, args.Encode()))
 	if cerr != nil {
@@ -204,17 +204,17 @@ func (db *CouchDB) View(design, view string, args url.Values) (results *ViewResu
 	return
 }
 
-func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError) {
+func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, error) {
 	c := make(chan *DocRev)
 	args.Set("feed", "continuous")
 	url := fmt.Sprintf("_changes?%s", args.Encode())
 	req, err := db.request("GET", url, nil)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	r, err := client.Do(req)
 	if err != nil {
-		return nil, regularToCouchError(err)
+		return nil, err
 	}
 	if r.StatusCode != 200 {
 		r.Body.Close()
@@ -227,19 +227,19 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, *CouchError
 		for {
 			var r DocRev
 			if err := j.Decode(&r); err != nil {
-				return // nil, regularToCouchError(err)
+				return // nil, err
 			}
 			if r.Seq == 0 {
 //				fmt.Printf("r.Seq == 0\n")
-				return // nil, regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq)))
+				return // nil, os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq))
 			}
 			c <- &r
 		}
 	}()
-	return c, nil //regularToCouchError(os.NewError("This should be impossible to reach, just putting it here to shut up go"))
+	return c, nil //os.NewError("This should be impossible to reach, just putting it here to shut up go")
 }
 
-func (db *CouchDB) Info() (info *CouchInfo, cerr *CouchError) {
+func (db *CouchDB) Info() (info *CouchInfo, cerr error) {
 	info = new(CouchInfo)
 	cerr = db.GetDocument(&info, "")
 	if cerr != nil {
@@ -248,11 +248,11 @@ func (db *CouchDB) Info() (info *CouchInfo, cerr *CouchError) {
 	return
 }
 
-func (db *CouchDB) Compact() (cerr *CouchError) {
+func (db *CouchDB) Compact() (cerr error) {
 	var s CouchSuccess
 	req, err := db.request("POST", "_compact", nil)
 	if err != nil {
-		return regularToCouchError(err)
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	_, cerr = couchDo(req, &s)
@@ -262,11 +262,11 @@ func (db *CouchDB) Compact() (cerr *CouchError) {
 	return nil
 }
 
-func (db *CouchDB) CompactView(designdoc string) (cerr *CouchError) {
+func (db *CouchDB) CompactView(designdoc string) (cerr error) {
 	var s CouchSuccess
 	req, err := db.request("POST", fmt.Sprintf("_compact/%s", designdoc), nil)
 	if err != nil {
-		return regularToCouchError(err)
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	_, cerr = couchDo(req, &s)
