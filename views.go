@@ -1,5 +1,9 @@
 package couchdb
 
+import (
+	"log"
+)
+
 type ViewDef struct{
 	Map string
 	Reduce string
@@ -43,7 +47,7 @@ func (dd *DesignDocument) SetMapReduce(name, map_fn, reduce_fn string) {
 	dd.Views[name].Reduce = reduce_fn
 }
 
-func (dd *DesignDocument) toJson() (out Json) {
+func (dd *DesignDocument) ToJson() (out Json) {
 	out = make(Json)
 	out["_id"] = "_design/" + dd.Name
 	out["language"] = "javascript"
@@ -60,5 +64,27 @@ func (dd *DesignDocument) toJson() (out Json) {
 	}
 	out["views"] = json_views
 	return
+}
+
+// forcibly sync the design document to the database,
+// overriding any existing design document with the same name
+func (dd *DesignDocument) ForceSync(db *CouchDB) error {
+	doc := dd.ToJson()
+	path := "/" + doc["_id"].(string)
+	orig := make(Json)
+
+	// get the document to get the rev
+	// this is the part where forcible override existing document!
+	db.GetDocument(&orig, path)
+	if orig["_rev"] != nil {
+		doc["_rev"] = orig["_rev"]
+	}
+
+	_, err := db.PutDocument(doc, path)
+	if err != nil {
+		log.Println("Failed to sync design document:", dd.Name, "\n", err)
+		return err
+	}
+	return nil
 }
 
