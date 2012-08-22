@@ -1,7 +1,9 @@
 package couchdb
 
 import (
+	"encoding/json"
 	"log"
+	"reflect"
 )
 
 type ViewDef struct{
@@ -80,6 +82,16 @@ func (dd *DesignDocument) ForceSync(db *CouchDB) error {
 		doc["_rev"] = orig["_rev"]
 	}
 
+	// check if there's any change before saving
+	// the 'orig' won't have the _id so set it before the comparison ..
+	orig["_id"] = doc["_id"]
+	if JsonEqual(doc, orig) {
+		// no change, so saving is pointless (it'll only increment the _rev property)
+		return nil
+	}
+
+	log.Println("Force-Syncing design document:", path)
+
 	_, err := db.PutDocument(doc, path)
 	if err != nil {
 		log.Println("Failed to sync design document:", dd.Name, "\n", err)
@@ -87,4 +99,24 @@ func (dd *DesignDocument) ForceSync(db *CouchDB) error {
 	}
 	return nil
 }
+
+func JsonEqual(obj1, obj2 Json) bool {
+	// reflect.DeepEqual fails because we use type aliases sometimes (e.g. Json instead of map[string]interface{} directly)
+	// so as a hack, convert both objects to json strings, then convert the json strings back to objects
+	// and compare these objects instead
+	// it's a trick to normalize both objects so they get the same type
+
+	normalize := func(obj Json) (out Json) {
+		json_text, _ := json.Marshal(obj)
+		out = make(Json)
+		json.Unmarshal(json_text, &out)
+		return
+	}
+
+	obj1 = normalize(obj1)
+	obj2 = normalize(obj2)
+
+	return reflect.DeepEqual(obj1, obj2)
+}
+
 
