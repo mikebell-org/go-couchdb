@@ -125,4 +125,8 @@ type ViewArgs struct {
 	UpdateSeq	bool
 }
 
+func (v *ViewArgs) Encode() string{
+	return "" // FIXME
+}
+
 //type CouchDocument map[string]interface{}
