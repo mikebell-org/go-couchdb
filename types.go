@@ -6,14 +6,8 @@ import (
 	"net/http"
 )
 
-func regularToCouchError(err error) (e *CouchError) {
-	e = new(CouchError)
-	e.Err = err.Error()
-	return e
-}
-
-func responseToCouchError(r *http.Response) (e *CouchError) {
-	e = new(CouchError)
+func responseToCouchError(r *http.Response) (error) {
+	e := new(CouchError)
 	e.ReturnCode = r.StatusCode
 	e.URL = r.Request.URL.String()
 	j := json.NewDecoder(r.Body)
