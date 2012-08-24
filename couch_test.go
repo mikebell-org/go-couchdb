@@ -15,6 +15,13 @@ type testdoc struct {
 }
 
 func TestMain(t *testing.T) {
+	a := ViewArgs{Key: "mike", Reduce: FalsePointer, IncludeDocs: true, Limit: 4}
+	str, err := a.Encode()
+	if err != nil {
+		t.Fatalf("Error encoding view URL: %s", err)
+	}
+	fmt.Printf("Encoding of view URL would be: %s\n", str)
+
 	var doc testdoc
 	var change *DocRev
 	doc.Test = "Hello World!"
