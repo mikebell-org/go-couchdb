@@ -195,17 +195,53 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, error) {
 	return &s, nil
 }
 
+func (db *CouchDB) viewReq(design, view string, args ViewArgs, body io.Reader) (r *http.Request, err error) {
+	var argstring, path string
+	if argstring, err = args.Encode(); err != nil {
+		return nil, err
+	}
+	if design == "" && view == "_all_docs" {
+		path = fmt.Sprintf("_all_docs?%s", argstring)
+	} else {
+		path = fmt.Sprintf("_design/%s/_view/%s?%s", design, view, argstring)
+	}
+	if body == nil {
+		return db.request("GET", path, body)
+	} else {
+		return db.request("POST", path, body)
+	}
+	panic("Should never be reached")
+}
+
 func (db *CouchDB) View(design, view string, args ViewArgs) (results *ViewResults, err error) {
 	results = new(ViewResults)
-	argstring, err := args.Encode()
+	req, err := db.viewReq(design, view, args, nil)
 	if err != nil {
 		return nil, err
 	}
-	if err = db.GetDocument(results, fmt.Sprintf("_design/%s/_view/%s?%s", design, view, argstring)); err != nil {
+	if _, err := couchDo(req, results); err != nil {
 		return nil, err
 	}
-	return
+	return results, nil
 }
+
+func (db *CouchDB) PostView(design, view string, args ViewArgs, keys []interface{}) (results *ViewResults, err error) {
+	results = new(ViewResults)
+	r, errCh := jsonifyDoc(postViewData{Keys: keys})
+	req, err := db.viewReq(design, view, args, r)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if _, err := couchDo(req, results); err != nil {
+		return nil, err
+	}
+	if err := <-errCh; err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 
 func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, error) {
 	c := make(chan *DocRev)

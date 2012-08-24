@@ -20,6 +20,10 @@ func init(){
 	TruePointer = &myTrue
 }
 
+type postViewData struct {
+	Keys	[]interface{}	`json:"keys"`
+}
+
 type ViewArgs struct {
 	Key interface{} `urlencode:"key"`
 	//	Keys		[]interface{}	`urlencode:"keys"`
