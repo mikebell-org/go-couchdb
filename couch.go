@@ -195,11 +195,14 @@ func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, error) {
 	return &s, nil
 }
 
-func (db *CouchDB) View(design, view string, args ViewArgs) (results *ViewResults, cerr error) {
+func (db *CouchDB) View(design, view string, args ViewArgs) (results *ViewResults, err error) {
 	results = new(ViewResults)
-	cerr = db.GetDocument(results, fmt.Sprintf("_design/%s/_view/%s?%s", design, view, args.Encode()))
-	if cerr != nil {
-		return nil, cerr
+	argstring, err := args.Encode()
+	if err != nil {
+		return nil, err
+	}
+	if err = db.GetDocument(results, fmt.Sprintf("_design/%s/_view/%s?%s", design, view, argstring)); err != nil {
+		return nil, err
 	}
 	return
 }
@@ -230,13 +233,7 @@ func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, error) {
 				return // nil, err
 			}
 			if r.Seq == 0 {
-<<<<<<< HEAD
-				//				fmt.Printf("r.Seq == 0\n")
-				return // nil, regularToCouchError(os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq)))
-=======
-//				fmt.Printf("r.Seq == 0\n")
 				return // nil, os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq))
->>>>>>> master
 			}
 			c <- &r
 		}

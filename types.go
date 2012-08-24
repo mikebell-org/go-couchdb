@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func responseToCouchError(r *http.Response) (error) {
+func responseToCouchError(r *http.Response) error {
 	e := new(CouchError)
 	e.ReturnCode = r.StatusCode
 	e.URL = r.Request.URL.String()
@@ -96,31 +96,6 @@ type BulkCommitResponse []BulkCommitResponseRow
 type BulkCommit struct {
 	AllOrNothing bool          `json:"all_or_nothing,omitempty"`
 	Docs         []interface{} `json:"docs"`
-}
-
-type UnescapedString	string
-
-type ViewArgs struct {
-	Key		interface{}
-	Keys		[]interface{}
-	StartKey	interface{}
-	StartKey_DocID	string
-	EndKey		interface{}
-	EndKey_DocID	string
-	Limit		uint
-	Stale		UnescapedString
-	Descending	bool
-	Skip		uint
-	Group		bool
-	GroupLevel	uint
-	Reduce		bool
-	IncludeDocs	bool
-	InclusiveEnd	bool
-	UpdateSeq	bool
-}
-
-func (v *ViewArgs) Encode() string{
-	return "" // FIXME
 }
 
 //type CouchDocument map[string]interface{}

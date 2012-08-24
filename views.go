@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-type ViewDef struct{
-	Map string
+type ViewDef struct {
+	Map    string
 	Reduce string
 }
 
@@ -16,11 +16,11 @@ type Json map[string]interface{}
 type ViewDefMap map[string]*ViewDef
 
 /**
-	Handles defining and syncing design documents
+Handles defining and syncing design documents
 
-	For now only supports map-reduce views
+For now only supports map-reduce views
 */
-type DesignDocument struct{
+type DesignDocument struct {
 	// The name of the design document, where the id is set to _design/<name>
 	Name string
 
@@ -118,5 +118,3 @@ func JsonEqual(obj1, obj2 Json) bool {
 
 	return reflect.DeepEqual(obj1, obj2)
 }
-
-
