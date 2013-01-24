@@ -242,7 +242,6 @@ func (db *CouchDB) PostView(design, view string, args ViewArgs, keys []interface
 	return results, nil
 }
 
-
 func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, error) {
 	c := make(chan *DocRev)
 	args.Set("feed", "continuous")

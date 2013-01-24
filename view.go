@@ -13,7 +13,7 @@ type UnescapedString string
 var FalsePointer *bool
 var TruePointer *bool
 
-func init(){
+func init() {
 	myFalse := false
 	myTrue := true
 	FalsePointer = &myFalse
@@ -21,7 +21,7 @@ func init(){
 }
 
 type postViewData struct {
-	Keys	[]interface{}	`json:"keys"`
+	Keys []interface{} `json:"keys"`
 }
 
 type ViewArgs struct {
