@@ -1,9 +1,9 @@
 package couchdb
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	//	"net/url"
 	"reflect"
 	"strings"
 )
@@ -25,8 +25,8 @@ type postViewData struct {
 }
 
 type ViewArgs struct {
-	Key interface{} `urlencode:"key"`
-	//	Keys		[]interface{}	`urlencode:"keys"`
+	Key            interface{}     `urlencode:"key"`
+	Keys           []interface{}   `urlencode:"keys"`
 	StartKey       interface{}     `urlencode:"startkey"`
 	StartKey_DocID string          `urlencode:"startkey_docid"`
 	EndKey         interface{}     `urlencode:"endkey"`
@@ -55,7 +55,7 @@ func fieldValue(v reflect.Value) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error %s encoding value %s of viewargs\n", err, v)
 	}
-	return string(b), nil
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 func isEmptyValue(v reflect.Value) bool {
