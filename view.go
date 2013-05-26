@@ -1,9 +1,9 @@
 package couchdb
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strings"
 )
@@ -55,7 +55,7 @@ func fieldValue(v reflect.Value) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error %s encoding value %s of viewargs\n", err, v)
 	}
-	return base64.URLEncoding.EncodeToString(b), nil
+	return url.QueryEscape(string(b)), nil
 }
 
 func isEmptyValue(v reflect.Value) bool {
