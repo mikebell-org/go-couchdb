@@ -2,9 +2,6 @@ package couchdb
 
 import (
 	"fmt"
-	"net/url"
-	//	"runtime"
-	//	"time"
 	"testing"
 )
 
@@ -15,6 +12,10 @@ type testdoc struct {
 }
 
 func TestMain(t *testing.T) {
+	var doc testdoc
+	var change *DocRev
+	var ok bool
+
 	a := ViewArgs{Key: "mike", Reduce: FalsePointer, IncludeDocs: true, Limit: 4}
 	str, err := a.Encode()
 	if err != nil {
@@ -22,8 +23,6 @@ func TestMain(t *testing.T) {
 	}
 	fmt.Printf("Encoding of view URL would be: %s\n", str)
 
-	var doc testdoc
-	var change *DocRev
 	doc.Test = "Hello World!"
 	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite", "", "")
 	if err != nil {
@@ -32,11 +31,11 @@ func TestMain(t *testing.T) {
 	fmt.Printf("Stage 1 complete\n")
 	defer db.Delete()
 
-	//	c := make(chan *DocRev)
-	args := make(url.Values)
-	args.Set("keepalive", "30000")
-	args.Set("since", "0")
-	c, err := db.ContinuousChanges(args)
+	args := ChangesArgs{Heartbeat: 30000, Since: 0, Feed: "continuous"}
+	c, errChan := db.ContinuousChanges(args)
+	if c == nil {
+		t.Fatalf("Error initializing changes feed: %s", <-errChan)
+	}
 
 	PostSuccess, err := db.PostDocument(doc)
 	if err != nil {
@@ -49,7 +48,9 @@ func TestMain(t *testing.T) {
 		t.Fatalf("Didn't get a DocID back from our POST")
 	}
 	fmt.Printf("Stage 2 complete\n")
-	change = <-c
+	if change, ok = <-c; !ok {
+		t.Fatalf("Error from changes feed: %s", <-errChan)
+	}
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
@@ -72,7 +73,9 @@ func TestMain(t *testing.T) {
 	}
 	fmt.Printf("Stage 4 complete\n")
 
-	change = <-c
+	if change, ok = <-c; !ok {
+		t.Fatalf("Error from changes feed: %s", <-errChan)
+	}
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
@@ -83,7 +86,9 @@ func TestMain(t *testing.T) {
 	}
 	fmt.Printf("Stage 5 complete\n")
 
-	change = <-c
+	if change, ok = <-c; !ok {
+		t.Fatalf("Error from changes feed: %s", <-errChan)
+	}
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}

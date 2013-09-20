@@ -1,11 +1,9 @@
 package couchdb
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"path"
 	"strings"
 )
@@ -240,40 +238,6 @@ func (db *CouchDB) PostView(design, view string, args ViewArgs, keys []interface
 		return nil, err
 	}
 	return results, nil
-}
-
-func (db *CouchDB) ContinuousChanges(args url.Values) (chan *DocRev, error) {
-	c := make(chan *DocRev)
-	args.Set("feed", "continuous")
-	url := fmt.Sprintf("_changes?%s", args.Encode())
-	req, err := db.request("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	r, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if r.StatusCode != 200 {
-		r.Body.Close()
-		return nil, responseToCouchError(r)
-	}
-	j := json.NewDecoder(r.Body)
-	go func() {
-		defer close(c)
-		defer r.Body.Close()
-		for {
-			var r DocRev
-			if err := j.Decode(&r); err != nil {
-				return // nil, err
-			}
-			if r.Seq == 0 {
-				return // nil, os.NewError(fmt.Sprintf("Sequence number was not set, or set to 0", r.Seq))
-			}
-			c <- &r
-		}
-	}()
-	return c, nil //os.NewError("This should be impossible to reach, just putting it here to shut up go")
 }
 
 func (db *CouchDB) Info() (info *CouchInfo, cerr error) {
