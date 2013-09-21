@@ -18,7 +18,7 @@ type ChangesArgs struct {
 }
 
 func (a *ChangesArgs) Encode() (string, error) {
-	return URLEncodeObject(*a)
+	return urlEncodeObject(*a)
 }
 
 type Changes struct {

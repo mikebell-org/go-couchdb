@@ -1,17 +1,31 @@
 package couchdb
 
-import ()
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+)
 
-type UnescapedString string
+type DocRev struct {
+	ID      string          `json:"id"`
+	Seq     interface{}     `json:"seq"`
+	Doc     json.RawMessage `json:"doc"`
+	Deleted bool            `json:"deleted"`
+	//	Changes []something
+}
 
-var FalsePointer *bool
-var TruePointer *bool
+type ViewResults struct {
+	TotalRows int `json:"total_rows"`
+	Offset    int `json:"offset"`
+	UpdateSeq int `json:"update_seq"`
+	Rows      []ViewRow
+}
 
-func init() {
-	myFalse := false
-	myTrue := true
-	FalsePointer = &myFalse
-	TruePointer = &myTrue
+type ViewRow struct {
+	ID    string          `json:"id"`
+	Key   interface{}     `json:"key"`
+	Value interface{}     `json:"value"`
+	Doc   json.RawMessage `json:"doc"`
 }
 
 type postViewData struct {
@@ -37,6 +51,53 @@ type ViewArgs struct {
 	UpdateSeq      bool            `urlencode:"update_seq"`
 }
 
+// Encodes a ViewArgs struct into a query string for a view
 func (a *ViewArgs) Encode() (string, error) {
-	return URLEncodeObject(*a)
+	return urlEncodeObject(*a)
+}
+
+// Perform a query against _all_docs, such as a bulk get
+func (db *CouchDB) AllDocs(args ViewArgs) (results *ViewResults, err error) {
+	return db.viewHelper("_all_docs", args)
+}
+
+// Perform a view query
+func (db *CouchDB) View(design, view string, args ViewArgs) (results *ViewResults, err error) {
+	return db.viewHelper(fmt.Sprintf("_design/%s/_view/%s", design, view), args)
+}
+
+func (db *CouchDB) viewHelper(path string, args ViewArgs) (results *ViewResults, err error) {
+	var argstring string
+	var body io.Reader
+	var errCh <-chan error
+	method := "GET"
+	results = new(ViewResults)
+
+	if args.Keys != nil { // Always POST for keys= views to keep things simple, anyone have a scenario where this doesn't work?
+		method = "POST"
+		body, errCh = jsonifyDoc(postViewData{Keys: args.Keys})
+		args.Keys = nil
+	}
+	if argstring, err = args.Encode(); err != nil {
+		return nil, err
+	}
+	requestString := fmt.Sprintf("%s?%s", path, argstring)
+	req, err := db.request(method, requestString, body)
+	if err != nil {
+		return nil, err
+	}
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if _, err = couchDo(req, results); err != nil {
+		return nil, err
+	}
+	if errCh == nil {
+		return
+	}
+	fmt.Printf("About to check errCh\n")
+	if err, _ := <-errCh; err != nil {
+		return nil, err
+	}
+	return
 }

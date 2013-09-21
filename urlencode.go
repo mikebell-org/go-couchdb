@@ -8,7 +8,21 @@ import (
 	"strings"
 )
 
-func URLEncodeObject(a interface{}) (string, error) {
+// This type is for strings that shouldn't be JSON-encoded in URL-encoded structs. For example feed=continuous instead of the default feed="continuous"
+type UnescapedString string
+
+// Parameters like Reduce and InclusiveEnd default to true and thus are set to *bool instead of bool, providing a tri-state (true, false, unset-which-defaults-to-True). Thus you'll need to use these instead of just true and false for those values.
+var FalsePointer *bool
+var TruePointer *bool
+
+func init() {
+	myFalse := false
+	myTrue := true
+	FalsePointer = &myFalse
+	TruePointer = &myTrue
+}
+
+func urlEncodeObject(a interface{}) (string, error) {
 	v := reflect.ValueOf(a)
 	t := reflect.TypeOf(a)
 	numElements := v.NumField()

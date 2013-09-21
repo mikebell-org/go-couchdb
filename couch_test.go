@@ -15,13 +15,7 @@ func TestMain(t *testing.T) {
 	var doc testdoc
 	var change *DocRev
 	var ok bool
-
-	a := ViewArgs{Key: "mike", Reduce: FalsePointer, IncludeDocs: true, Limit: 4}
-	str, err := a.Encode()
-	if err != nil {
-		t.Fatalf("Error encoding view URL: %s", err)
-	}
-	fmt.Printf("Encoding of view URL would be: %s\n", str)
+	var results *ViewResults
 
 	doc.Test = "Hello World!"
 	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite", "", "")
@@ -29,7 +23,7 @@ func TestMain(t *testing.T) {
 		t.Fatalf("Error creating new database for testing: %s.\nNote, tests expect a couch database on 127.0.0.1:5984, anyone have better ideas?", err)
 	}
 	fmt.Printf("Stage 1 complete\n")
-	defer db.Delete()
+	defer db.DeleteDatabase()
 
 	args := ChangesArgs{Heartbeat: 30000, Since: 0, Feed: "continuous"}
 	c, errChan := db.ContinuousChanges(args)
@@ -80,11 +74,25 @@ func TestMain(t *testing.T) {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
 
+	a := ViewArgs{Reduce: FalsePointer, IncludeDocs: true, Limit: 4}
+
+	if str, err := a.Encode(); err != nil {
+		t.Fatalf("Error encoding view URL: %s", err)
+	} else {
+		fmt.Printf("View data will encode as: %s\n", str)
+	}
+
+	if results, err = db.AllDocs(a); err != nil {
+		t.Errorf("Failed calling _all_docs view: %s", err)
+	}
+	fmt.Printf("%+v\n", results)
+	fmt.Printf("Stage 5 complete\n")
+
 	_, err = db.DeleteDocument(PostSuccess.ID, PutSuccess.Rev)
 	if err != nil {
 		t.Fatalf("Error deleting doc: %s", err)
 	}
-	fmt.Printf("Stage 5 complete\n")
+	fmt.Printf("Stage 6 complete\n")
 
 	if change, ok = <-c; !ok {
 		t.Fatalf("Error from changes feed: %s", <-errChan)
@@ -93,7 +101,7 @@ func TestMain(t *testing.T) {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
 
-	err = db.Delete()
+	err = db.DeleteDatabase()
 	if err != nil {
 		t.Fatalf("Error deleting database: %s", err)
 	}
