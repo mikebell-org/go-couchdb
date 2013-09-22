@@ -17,6 +17,7 @@ type CouchInfo struct {
 	CommittedUpdateSeq int         `json:"committed_update_seq"`
 }
 
+// Returns information about the database, can also be used to verify its existence
 func (db *CouchDB) Info() (info *CouchInfo, err error) {
 	info = new(CouchInfo)
 	err = db.GetDocument(&info, "")

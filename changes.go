@@ -33,6 +33,10 @@ func (db *CouchDB) Changes(args ChangesArgs) (*Changes, error) {
 	panic("Not implemented yet")
 }
 
+// ContinuousChanges starts a feed=continuous view of the _changes feed for the DB.
+// Each change will be emitted from the *DocRev channel until the server hangs
+// up, at which time the DocRev channel will be closed and the error channel
+// will spit out the appropriate error
 func (db *CouchDB) ContinuousChanges(args ChangesArgs) (<-chan *DocRev, <-chan error) {
 	c := make(chan *DocRev)
 	e := make(chan error)

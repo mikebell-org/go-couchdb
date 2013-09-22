@@ -18,6 +18,7 @@ type BulkCommit struct {
 	Docs         []interface{} `json:"docs"`
 }
 
+// BulkUpdate accepts a commit with a list of updates to make to the DB, and returns a list of responses showing the status of each commit
 func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	var s BulkCommitResponse
 	r, errCh := jsonifyDoc(c)
