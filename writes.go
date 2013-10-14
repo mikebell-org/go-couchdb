@@ -15,6 +15,7 @@ type BulkCommitResponse []BulkCommitResponseRow
 
 type BulkCommit struct {
 	AllOrNothing bool          `json:"all_or_nothing,omitempty"` // Not guaranteed on regular couchdb, not supported on cloudant. Generally avoid.
+	NewEdits     *bool         `json:"new_edits"`                // For replication
 	Docs         []interface{} `json:"docs"`
 }
 
