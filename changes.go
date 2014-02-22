@@ -5,6 +5,18 @@ import (
 	"fmt"
 )
 
+type DocRev struct {
+	ID      string          `json:"id"`
+	Seq     interface{}     `json:"seq"`
+	Doc     json.RawMessage `json:"doc"`
+	Deleted bool            `json:"deleted"`
+	Changes []Rev           `json:"changes"`
+}
+
+type Rev struct {
+	Rev string `json:"rev"`
+}
+
 type ChangesArgs struct {
 	Since       interface{}     `urlencode:"since"`
 	Limit       uint64          `urlencode:"limit"`
@@ -15,6 +27,7 @@ type ChangesArgs struct {
 	Filter      string          `urlencode:"filter"`
 	IncludeDocs bool            `urlencode:"include_docs"`
 	Style       string          `urlencode:"style"`
+	SeqInterval uint64          `urlencode:"seq_interval"`
 }
 
 func (a *ChangesArgs) Encode() (string, error) {

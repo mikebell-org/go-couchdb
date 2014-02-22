@@ -6,14 +6,6 @@ import (
 	"io"
 )
 
-type DocRev struct {
-	ID      string          `json:"id"`
-	Seq     interface{}     `json:"seq"`
-	Doc     json.RawMessage `json:"doc"`
-	Deleted bool            `json:"deleted"`
-	//	Changes []something
-}
-
 type ViewResults struct {
 	TotalRows int `json:"total_rows"`
 	Offset    int `json:"offset"`
@@ -56,22 +48,41 @@ func (a *ViewArgs) Encode() (string, error) {
 	return urlEncodeObject(*a)
 }
 
+type AllDocsResult struct {
+	TotalRows int `json:"total_rows"`
+	Offset    int `json:"offset"`
+	UpdateSeq int `json:"update_seq"`
+	Rows      []AllDocsRow
+}
+
+type AllDocsRow struct {
+	ID    string          `json:"id"`
+	Key   interface{}     `json:"key"`
+	Value AllDocsValue    `json:"value"`
+	Doc   json.RawMessage `json:"doc"`
+}
+
+type AllDocsValue struct {
+	Rev string `json:"rev"`
+}
+
 // Perform a query against _all_docs, such as a bulk get
-func (db *CouchDB) AllDocs(args ViewArgs) (results *ViewResults, err error) {
-	return db.viewHelper("_all_docs", args)
+func (db *CouchDB) AllDocs(args ViewArgs) (results *AllDocsResult, err error) {
+	results = new(AllDocsResult)
+	return results, db.viewHelper("_all_docs", args, results)
 }
 
 // Perform a view query
 func (db *CouchDB) View(design, view string, args ViewArgs) (results *ViewResults, err error) {
-	return db.viewHelper(fmt.Sprintf("_design/%s/_view/%s", design, view), args)
+	results = new(ViewResults)
+	return results, db.viewHelper(fmt.Sprintf("_design/%s/_view/%s", design, view), args, results)
 }
 
-func (db *CouchDB) viewHelper(path string, args ViewArgs) (results *ViewResults, err error) {
+func (db *CouchDB) viewHelper(path string, args ViewArgs, results interface{}) (err error) {
 	var argstring string
 	var body io.Reader
 	var errCh <-chan error
 	method := "GET"
-	results = new(ViewResults)
 
 	if args.Keys != nil { // Always POST for keys= views to keep things simple, anyone have a scenario where this doesn't work?
 		method = "POST"
@@ -79,25 +90,24 @@ func (db *CouchDB) viewHelper(path string, args ViewArgs) (results *ViewResults,
 		args.Keys = nil
 	}
 	if argstring, err = args.Encode(); err != nil {
-		return nil, err
+		return err
 	}
 	requestString := fmt.Sprintf("%s?%s", path, argstring)
 	req, err := db.request(method, requestString, body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if _, err = couchDo(req, results); err != nil {
-		return nil, err
+		return err
 	}
 	if errCh == nil {
 		return
 	}
-	fmt.Printf("About to check errCh\n")
 	if err, _ := <-errCh; err != nil {
-		return nil, err
+		return err
 	}
 	return
 }
