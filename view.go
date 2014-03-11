@@ -63,7 +63,8 @@ type AllDocsRow struct {
 }
 
 type AllDocsValue struct {
-	Rev string `json:"rev"`
+	Rev     string `json:"rev"`
+	Deleted bool   `json:"deleted"`
 }
 
 // Perform a query against _all_docs, such as a bulk get
