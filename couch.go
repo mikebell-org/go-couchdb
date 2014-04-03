@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path"
-	"strings"
 )
 
 type CouchDB struct {
@@ -16,31 +14,25 @@ type CouchDB struct {
 	Password string
 }
 
-func (db *CouchDB) request(method, urlpath string, body io.Reader) (r *http.Request, err error) {
-	clean_url := func(url string) string {
-		if strings.HasPrefix(url, "http://") {
-			return "http://" + path.Clean(url[7:])
-		} else if strings.HasPrefix(url, "https://") {
-			return "https://" + path.Clean(url[8:])
-		} else {
-			return path.Clean(url)
-		}
-		panic("Shouldn't reach this spot")
-	}
-
-	url := clean_url(fmt.Sprintf("%s/%s/%s", db.Host, db.Database, urlpath))
-	r, err = http.NewRequest(method, url, body)
-	if err != nil {
+func (db *CouchDB) createRequest(method, urlpath, querystring string, body io.Reader) (r *http.Request, err error) {
+	if r, err = http.NewRequest(method, db.Host, body); err != nil {
 		return
 	}
+	opaque := fmt.Sprintf("//%s/%s/%s", r.URL.Host, db.Database, urlpath)
+	if querystring != "" {
+		opaque = fmt.Sprintf("%s?%s", opaque, querystring)
+	}
+	r.URL.Path = ""
+	r.URL.RawQuery = ""
+	r.URL.Opaque = opaque
 	if db.Username != "" {
 		r.SetBasicAuth(db.Username, db.Password)
 	}
 	return
 }
 
-func (db *CouchDB) get(doc interface{}, path string) error {
-	req, err := db.request("GET", path, nil)
+func (db *CouchDB) get(doc interface{}, path, query string) error {
+	req, err := db.createRequest("GET", path, query, nil)
 	if err != nil {
 		return err
 	}

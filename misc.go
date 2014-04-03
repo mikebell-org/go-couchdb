@@ -30,7 +30,7 @@ func (db *CouchDB) Info() (info *CouchInfo, err error) {
 // Starts compaction on a database
 func (db *CouchDB) Compact() (err error) {
 	var s CouchSuccess
-	req, err := db.request("POST", "_compact", nil)
+	req, err := db.createRequest("POST", "_compact", "", nil)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (db *CouchDB) Compact() (err error) {
 // Starts compaction on a view
 func (db *CouchDB) CompactView(designdoc string) (err error) {
 	var s CouchSuccess
-	req, err := db.request("POST", fmt.Sprintf("_compact/%s", designdoc), nil)
+	req, err := db.createRequest("POST", fmt.Sprintf("_compact/%s", designdoc), "", nil)
 	if err != nil {
 		return err
 	}

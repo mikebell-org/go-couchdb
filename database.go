@@ -1,12 +1,52 @@
 package couchdb
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
+var slashReplacer *strings.Replacer
+
+func init() {
+	slashReplacer = strings.NewReplacer("/", "%2F")
+}
+
+func validDBname(database string) error {
+	if len(database) == 0 {
+		return errors.New("Database name cannot be blank")
+	}
+	if database[0] < 'a' || database[0] > 'z' {
+		return errors.New("First character of database name must be in the range of a-z")
+	}
+	slashReplacer.Replace(database)
+	for _, c := range database {
+		switch {
+		case c == '/':
+			continue
+		case '0' <= c && c <= '9':
+			continue
+		case 'a' <= c && c <= 'z':
+			continue
+		case c == '_' || c == '$' || c == '(' || c == ')' || c == '+' || c == '-':
+			continue
+		default:
+			return fmt.Errorf("Invalid character %s in database name", c)
+		}
+	}
+	return nil
+}
+
 // Opens a database
 func Database(host, database, username, password string) (db *CouchDB, err error) {
 	db = new(CouchDB)
 	db.Host = host
-	db.Database = database
 	db.Username = username
 	db.Password = password
+	if err = validDBname(database); err != nil {
+		return nil, err
+	}
+	db.Database = slashReplacer.Replace(database)
 	return db, nil
 }
 
@@ -17,7 +57,7 @@ func CreateDatabase(host, database, username, password string) (*CouchDB, error)
 	if cerr != nil {
 		return nil, cerr
 	}
-	req, err := db.request("PUT", "", nil)
+	req, err := db.createRequest("PUT", "", "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +73,7 @@ func CreateDatabase(host, database, username, password string) (*CouchDB, error)
 
 // Deletes the database in question. Scary!
 func (db *CouchDB) DeleteDatabase() error {
-	req, err := db.request("DELETE", "", nil)
+	req, err := db.createRequest("DELETE", "", "", nil)
 	if err != nil {
 		return err
 	}

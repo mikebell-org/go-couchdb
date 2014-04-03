@@ -93,8 +93,7 @@ func (db *CouchDB) viewHelper(path string, args ViewArgs, results interface{}) (
 	if argstring, err = args.Encode(); err != nil {
 		return err
 	}
-	requestString := fmt.Sprintf("%s?%s", path, argstring)
-	req, err := db.request(method, requestString, body)
+	req, err := db.createRequest(method, path, argstring, body)
 	if err != nil {
 		return err
 	}

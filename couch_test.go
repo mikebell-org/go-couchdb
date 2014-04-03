@@ -11,11 +11,22 @@ type testdoc struct {
 	Test string
 }
 
+var WeirdDocIDs = []string{
+	"abc",
+	"Hello World",
+	"Hello/World",
+	"4$44$^&",
+	"_design/this_is_just_a_test",
+	"+1",
+	"^%$@*!@&*((",
+	"tab	",
+}
+
 func TestMain(t *testing.T) {
 	var doc testdoc
 	var change *DocRev
-	var ok bool
-	var results *ViewResults
+	//var ok bool
+	var results *AllDocsResult
 
 	doc.Test = "Hello World!"
 	db, err := CreateDatabase("http://127.0.0.1:5984", "go_couchdb_test_suite", "", "")
@@ -26,9 +37,25 @@ func TestMain(t *testing.T) {
 	defer db.DeleteDatabase()
 
 	args := ChangesArgs{Heartbeat: 30000, Since: 0, Feed: "continuous"}
-	c, errChan := db.ContinuousChanges(args)
-	if c == nil {
+	changeChan, errChan := db.ContinuousChanges(args)
+	if changeChan == nil {
+		fmt.Printf("DEBUG: Error initializing changes feed\n")
 		t.Fatalf("Error initializing changes feed: %s", <-errChan)
+	}
+
+	changeOrErr := func() *DocRev {
+		select {
+		case change, ok := <-changeChan:
+			if !ok {
+				t.Fatal("Error on continuous changes feed")
+			}
+			return change
+		case err := <-errChan:
+			if err != nil {
+				t.Fatalf("Error on continuous changes feed: %s", err)
+			}
+		}
+		panic("Should never be reached")
 	}
 
 	PostSuccess, err := db.PostDocument(doc)
@@ -42,9 +69,12 @@ func TestMain(t *testing.T) {
 		t.Fatalf("Didn't get a DocID back from our POST")
 	}
 	fmt.Printf("Stage 2 complete\n")
-	if change, ok = <-c; !ok {
-		t.Fatalf("Error from changes feed: %s", <-errChan)
-	}
+	change = changeOrErr()
+	/*
+		if change, ok = <-c; !ok {
+			t.Fatalf("Error from changes feed: %s", <-errChan)
+		}
+	*/
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
@@ -67,9 +97,7 @@ func TestMain(t *testing.T) {
 	}
 	fmt.Printf("Stage 4 complete\n")
 
-	if change, ok = <-c; !ok {
-		t.Fatalf("Error from changes feed: %s", <-errChan)
-	}
+	change = changeOrErr()
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
@@ -88,19 +116,43 @@ func TestMain(t *testing.T) {
 	fmt.Printf("%+v\n", results)
 	fmt.Printf("Stage 5 complete\n")
 
-	_, err = db.DeleteDocument(PostSuccess.ID, PutSuccess.Rev)
-	if err != nil {
+	if _, err = db.DeleteDocument(PostSuccess.ID, PutSuccess.Rev); err != nil {
 		t.Fatalf("Error deleting doc: %s", err)
 	}
 	fmt.Printf("Stage 6 complete\n")
 
-	if change, ok = <-c; !ok {
-		t.Fatalf("Error from changes feed: %s", <-errChan)
-	}
+	change = changeOrErr()
 	if change.ID != PostSuccess.ID {
 		t.Errorf("Change I got from the changes API didn't match what I got from my POST")
 	}
 
+	// Last test, big bulk commit of weird docids followed by getting each one individually to ensure docids are being encoded correctly
+	bc := BulkCommit{}
+	for _, docid := range WeirdDocIDs {
+		bc.Docs = append(bc.Docs, testdoc{ID: docid})
+	}
+	fmt.Printf("Bulk committing: %+v\n", bc)
+	if bc_response, err := db.BulkUpdate(&bc); err != nil {
+		t.Fatalf("Error doing a bulk addition of weird docids: %+v %s", bc_response, err)
+	} else {
+		var errorStrings []string
+		for _, row := range *bc_response {
+			if row.Error != "" {
+				errorStrings = append(errorStrings, row.Error)
+			}
+		}
+		if len(errorStrings) != 0 {
+			t.Fatalf("Error writing one or more weird docids: %s", errorStrings)
+		}
+	}
+	for _, docid := range WeirdDocIDs {
+		var doc testdoc
+		if err = db.GetDocument(&doc, docid); err != nil {
+			t.Fatalf("Error getting one of the weird docid docs: %s", err)
+		}
+	}
+
+	// All done, delete the DB to clean up and as a final test
 	err = db.DeleteDatabase()
 	if err != nil {
 		t.Fatalf("Error deleting database: %s", err)

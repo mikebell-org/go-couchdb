@@ -15,7 +15,7 @@ type BulkCommitResponse []BulkCommitResponseRow
 
 type BulkCommit struct {
 	AllOrNothing bool          `json:"all_or_nothing,omitempty"` // Not guaranteed on regular couchdb, not supported on cloudant. Generally avoid.
-	NewEdits     *bool         `json:"new_edits"`                // For replication
+	NewEdits     *bool         `json:"new_edits,omitempty"`      // For replication
 	Docs         []interface{} `json:"docs"`
 }
 
@@ -23,7 +23,7 @@ type BulkCommit struct {
 func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	var s BulkCommitResponse
 	r, errCh := jsonifyDoc(c)
-	req, err := db.request("POST", "_bulk_docs", r)
+	req, err := db.createRequest("POST", "_bulk_docs", "", r)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
-	req, err := db.request("PUT", path, r)
+	req, err := db.createRequest("PUT", path, "", r)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, err
 func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
-	req, err := db.request("POST", "", r)
+	req, err := db.createRequest("POST", "", "", r)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 
 func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, error) {
 	var s CouchSuccess
-	req, err := db.request("DELETE", fmt.Sprintf("%s?rev=%s", path, rev), nil)
+	req, err := db.createRequest("DELETE", path, fmt.Sprintf("rev=%s", rev), nil)
 	if err != nil {
 		return nil, err
 	}

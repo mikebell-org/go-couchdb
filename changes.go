@@ -52,15 +52,14 @@ func (db *CouchDB) Changes(args ChangesArgs) (*Changes, error) {
 // will spit out the appropriate error
 func (db *CouchDB) ContinuousChanges(args ChangesArgs) (<-chan *DocRev, <-chan error) {
 	c := make(chan *DocRev)
-	e := make(chan error)
+	e := make(chan error, 1)
 	args.Feed = "continuous"
 	argsstring, err := args.Encode()
 	if err != nil {
 		e <- err
 		return nil, e
 	}
-	url := fmt.Sprintf("_changes?%s", argsstring)
-	req, err := db.request("GET", url, nil)
+	req, err := db.createRequest("GET", "_changes", argsstring, nil)
 	if err != nil {
 		e <- err
 		return nil, e

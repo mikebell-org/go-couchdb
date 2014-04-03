@@ -38,7 +38,6 @@ func (c *CouchError) Error() string {
 }
 
 type CouchSuccess struct {
-	// {"ok":true,"id":"bob","rev":"1-967a00dff5e02add41819138abb3284d"}
 	OK  bool   `json:"ok"`
 	ID  string `json:"id"`
 	Rev string `json:"rev"`

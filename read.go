@@ -1,15 +1,12 @@
 package couchdb
 
 import (
-	"fmt"
 	"io"
-	"net/url"
 )
 
 // Does a "raw" GET, returning an io.Reader that can be used to parse the returned data yourself.
-func (db *CouchDB) GetRaw(path string) (io.Reader, error) {
-	escapedPath := url.QueryEscape(path)
-	req, err := db.request("GET", escapedPath, nil)
+func (db *CouchDB) GetRaw(path, query string) (io.Reader, error) {
+	req, err := db.createRequest("GET", escape_docid(path), query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -24,13 +21,11 @@ func (db *CouchDB) GetRaw(path string) (io.Reader, error) {
 }
 
 // Accepts a struct or a map[string]something to fill with the doc's data, and a docid path relative to the database, returns error status
-func (db *CouchDB) GetDocument(doc interface{}, path string) error {
-	escapedPath := url.QueryEscape(path)
-	return db.get(doc, escapedPath)
+func (db *CouchDB) GetDocument(doc interface{}, docid string) error {
+	return db.get(doc, escape_docid(docid), "")
 }
 
 // As GetDocument, but also accepts a rev. Will attempt to retrieve the document at that rev
-func (db *CouchDB) GetDocumentAtRev(doc interface{}, path, rev string) error {
-	escapedPath := url.QueryEscape(path)
-	return db.get(doc, fmt.Sprintf("%s?rev=%s", escapedPath, rev))
+func (db *CouchDB) GetDocumentAtRev(doc interface{}, docid, rev string) error {
+	return db.get(doc, escape_docid(docid), rev)
 }
