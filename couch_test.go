@@ -3,6 +3,7 @@ package couchdb
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 type testdoc struct {
@@ -54,6 +55,8 @@ func TestMain(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error on continuous changes feed: %s", err)
 			}
+		case _ = <-time.After(5 * time.Second):
+			t.Fatalf("Timeout waiting for a changes event that was anticipated")
 		}
 		panic("Should never be reached")
 	}
