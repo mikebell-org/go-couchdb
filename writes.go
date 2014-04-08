@@ -41,10 +41,10 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	return &s, nil
 }
 
-func (db *CouchDB) PutDocument(doc interface{}, path string) (*CouchSuccess, error) {
+func (db *CouchDB) PutDocument(doc interface{}, docid string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	r, errCh := jsonifyDoc(doc)
-	req, err := db.createRequest("PUT", path, "", r)
+	req, err := db.createRequest("PUT", escape_docid(docid), "", r)
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +80,9 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 	return &s, nil
 }
 
-func (db *CouchDB) DeleteDocument(path, rev string) (*CouchSuccess, error) {
+func (db *CouchDB) DeleteDocument(docid, rev string) (*CouchSuccess, error) {
 	var s CouchSuccess
-	req, err := db.createRequest("DELETE", path, fmt.Sprintf("rev=%s", rev), nil)
+	req, err := db.createRequest("DELETE", escape_docid(docid), fmt.Sprintf("rev=%s", rev), nil)
 	if err != nil {
 		return nil, err
 	}
