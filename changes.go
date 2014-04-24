@@ -25,7 +25,7 @@ type NormalChanges struct{
 
 
 type ChangesArgs struct {
-	Since       interface{} `urlencode:"since"`
+	Since       interface{}     `urlencode:"since"`
 	Limit       uint64          `urlencode:"limit"`
 	Descending  bool            `urlencode:"descending"`
 	Feed        UnescapedString `urlencode:"feed"`
