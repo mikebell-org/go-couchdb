@@ -84,7 +84,7 @@ func (db *CouchDB) Changes(args ChangesArgs,returnChange * NormalChanges) ( erro
 // will spit out the appropriate error
 func (db *CouchDB) ContinuousChanges(args ChangesArgs) (<-chan *DocRev, <-chan error) {
 	c := make(chan *DocRev)
-	e := make(chan error)
+	e := make(chan error,1)
 	args.Feed = "continuous"
 	argsstring, err := args.Encode()
 	if err != nil {
