@@ -19,13 +19,13 @@ type Rev struct {
 
 type NormalChanges struct{
     Results []DocRev
-    Last_seq string
-    Pending uint64
+    LastSeq interface{} `json:"last_seq"`
+    Pending uint64 `json:"pending"`
 }
 
 
 type ChangesArgs struct {
-	Since       UnescapedString `urlencode:"since"`
+	Since       interface{} `urlencode:"since"`
 	Limit       uint64          `urlencode:"limit"`
 	Descending  bool            `urlencode:"descending"`
 	Feed        UnescapedString `urlencode:"feed"`
