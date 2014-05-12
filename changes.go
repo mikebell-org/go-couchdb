@@ -18,7 +18,7 @@ type Rev struct {
 }
 
 type NormalChanges struct{
-    Results []DocRev
+    Results []DocRev    `json:"results"`
     LastSeq interface{} `json:"last_seq"`
     Pending uint64 `json:"pending"`
 }
