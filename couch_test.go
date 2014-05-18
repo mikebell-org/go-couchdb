@@ -26,7 +26,7 @@ var WeirdDocIDs = []string{
 func TestMain(t *testing.T) {
 	var doc testdoc
 	var change *DocRev
-	//var ok bool
+	var ok bool
 	var results *AllDocsResult
 
 	doc.Test = "Hello World!"
@@ -46,7 +46,7 @@ func TestMain(t *testing.T) {
 
 	changeOrErr := func() *DocRev {
 		select {
-		case change, ok := <-changeChan:
+		case change, ok = <-changeChan:
 			if !ok {
 				t.Fatal("Error on continuous changes feed")
 			}
@@ -106,12 +106,6 @@ func TestMain(t *testing.T) {
 	}
 
 	a := ViewArgs{Reduce: FalsePointer, IncludeDocs: true, Limit: 4}
-
-	if str, err := a.Encode(); err != nil {
-		t.Fatalf("Error encoding view URL: %s", err)
-	} else {
-		fmt.Printf("View data will encode as: %s\n", str)
-	}
 
 	if results, err = db.AllDocs(a); err != nil {
 		t.Errorf("Failed calling _all_docs view: %s", err)

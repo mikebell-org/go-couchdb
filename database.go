@@ -31,7 +31,7 @@ func validDBname(database string) error {
 		case c == '_' || c == '$' || c == '(' || c == ')' || c == '+' || c == '-':
 			continue
 		default:
-			return fmt.Errorf("Invalid character %s in database name", c)
+			return fmt.Errorf("Invalid character %c in database name", c)
 		}
 	}
 	return nil
