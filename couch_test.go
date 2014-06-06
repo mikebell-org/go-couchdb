@@ -7,8 +7,7 @@ import (
 )
 
 type testdoc struct {
-	ID   string `json:"_id,omitempty"`
-	Rev  string `json:"_rev,omitempty"`
+	BasicDocumentWithMtime
 	Test string
 }
 
@@ -93,7 +92,7 @@ func TestMain(t *testing.T) {
 
 	PutSuccess, err := db.PutDocument(&doc, PostSuccess.ID)
 	if err != nil {
-		t.Fatalf("Error updating existing doc: %s", err)
+		t.Fatalf("Error updating existing doc (%+v): %s", doc, err)
 	}
 	if PutSuccess.Rev == PostSuccess.Rev {
 		t.Fatalf("Error updating a doc, rev stayed the same?")
@@ -126,7 +125,9 @@ func TestMain(t *testing.T) {
 	// Last test, big bulk commit of weird docids followed by getting each one individually to ensure docids are being encoded correctly
 	bc := BulkCommit{}
 	for _, docid := range WeirdDocIDs {
-		bc.Docs = append(bc.Docs, testdoc{ID: docid})
+		td := testdoc{}
+		td.ID = docid
+		bc.Docs = append(bc.Docs, td)
 	}
 	fmt.Printf("Bulk committing: %+v\n", bc)
 	if bc_response, err := db.BulkUpdate(&bc); err != nil {

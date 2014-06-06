@@ -21,6 +21,9 @@ type BulkCommit struct {
 
 // BulkUpdate accepts a commit with a list of updates to make to the DB, and returns a list of responses showing the status of each commit
 func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
+	for doc := range c.Docs {
+		callWriteHook(doc)
+	}
 	var s BulkCommitResponse
 	r, errCh := jsonifyDoc(c)
 	req, err := db.createRequest("POST", "_bulk_docs", "", r)
@@ -43,6 +46,7 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 
 func (db *CouchDB) PutDocument(doc interface{}, docid string) (*CouchSuccess, error) {
 	var s CouchSuccess
+	callWriteHook(doc)
 	r, errCh := jsonifyDoc(doc)
 	req, err := db.createRequest("PUT", escape_docid(docid), "", r)
 	if err != nil {
@@ -61,6 +65,7 @@ func (db *CouchDB) PutDocument(doc interface{}, docid string) (*CouchSuccess, er
 
 func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 	var s CouchSuccess
+	callWriteHook(doc)
 	r, errCh := jsonifyDoc(doc)
 	req, err := db.createRequest("POST", "", "", r)
 	if err != nil {
@@ -94,4 +99,10 @@ func (db *CouchDB) DeleteDocument(docid, rev string) (*CouchSuccess, error) {
 		// FIXME Unexpected code. Do something?
 	}
 	return &s, nil
+}
+
+func callWriteHook(d interface{}) {
+	if x, ok := d.(DocumentWithPreWriteHook); ok {
+		x.CouchDocPreWrite()
+	}
 }
