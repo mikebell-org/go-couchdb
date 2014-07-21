@@ -1,7 +1,9 @@
 package couchdb
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"testing"
 	"time"
 )
@@ -11,16 +13,19 @@ type testdoc struct {
 	Test string
 }
 
-var WeirdDocIDs = []string{
-	"abc",
-	"Hello World",
-	"Hello/World",
-	"4$44$^&",
-	"_design/this_is_just_a_test",
-	"+1",
-	"^%$@*!@&*((",
-	"tab	",
-}
+var (
+	WeirdDocIDs = []string{
+		"abc",
+		"Hello World",
+		"Hello/World",
+		"4$44$^&",
+		"_design/this_is_just_a_test",
+		"+1",
+		"^%$@*!@&*((",
+		"tab	",
+	}
+	test_attachment = "test attachment data"
+)
 
 func TestMain(t *testing.T) {
 	var doc testdoc
@@ -148,6 +153,37 @@ func TestMain(t *testing.T) {
 		if err = db.GetDocument(&doc, docid); err != nil {
 			t.Fatalf("Error getting one of the weird docid docs: %s", err)
 		}
+	}
+
+	// Attachment tests
+	if err = db.GetDocument(&doc, WeirdDocIDs[0]); err == nil {
+
+		if _, err := db.PutAttachment(doc, doc.ID, doc.Rev, bytes.NewBufferString(test_attachment), "testAttachment", "text/plain"); err != nil {
+
+			t.Fatalf("Failed to put attachment: %v", err)
+		}
+
+		if r, err := db.GetAttachment(doc.ID, "testAttachment", ""); err == nil {
+
+			att, err := ioutil.ReadAll(r)
+			if err != nil {
+
+				t.Fatalf("Failed to read attachment contents: %v", err)
+			}
+
+			if test_attachment != bytes.NewBuffer(att).String() {
+
+				t.Fatalf("Attachment contents do not match:\nReceived:\n%v\n\nExpected:\n%v", att, test_attachment)
+			}
+		} else {
+
+			t.Fatalf("Failed to get attachment from DB: %v", err)
+		}
+
+		fmt.Printf("Attachment tests passed\n")
+	} else {
+
+		t.Fatalf("Failed to retrieve document %v for attachment tests", WeirdDocIDs[0])
 	}
 
 	// All done, delete the DB to clean up and as a final test
