@@ -4,9 +4,8 @@ import (
 	"io"
 )
 
-// Does a "raw" GET, returning an io.Reader that can be used to parse the returned data yourself.
-func (db *CouchDB) GetRaw(path, query string) (io.Reader, error) {
-	req, err := db.createRequest("GET", escape_docid(path), query, nil)
+func (db *CouchDB) getRaw(path, query string) (io.Reader, error) {
+	req, err := db.createRequest("GET", path, query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -18,6 +17,16 @@ func (db *CouchDB) GetRaw(path, query string) (io.Reader, error) {
 		return nil, responseToCouchError(r)
 	}
 	return r.Body, nil
+}
+
+// Does a "raw" GET, returning an io.Reader that can be used to parse the returned data yourself.
+func (db *CouchDB) GetRaw(path, query string) (io.Reader, error) {
+	return db.getRaw(escape_docid(path), query)
+}
+
+// Same as GetRaw, does a "raw" GET, returning an io.Reader that can be used to parse the returned data yourself.
+func (db *CouchDB) GetAttachment(docid, attname, query string) (io.Reader, error) {
+	return db.getRaw(escape_docid(docid)+"/"+escape_docid(attname), query)
 }
 
 // Accepts a struct or a map[string]something to fill with the doc's data, and a docid path relative to the database, returns error status
