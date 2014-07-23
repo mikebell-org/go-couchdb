@@ -59,6 +59,21 @@ func (db *CouchDB) PutAttachment(docid string, docrev string, attachment io.Read
 	return &s, nil
 }
 
+// A slightly different flavour of the db.PutAttachment method
+func (doc *BasicDocument) PutAttachment(db *CouchDB, attachment io.Reader, attname string, ctype string) (*CouchSuccess, error) {
+	var s CouchSuccess
+	req, err := db.createRequest("PUT", escape_docid(doc.ID)+"/"+escape_docid(attname), "rev="+doc.Rev, attachment)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", ctype)
+	_, cerr := couchDo(req, &s)
+	if cerr != nil {
+		return nil, cerr
+	}
+	return &s, nil
+}
+
 func (db *CouchDB) PutDocument(doc interface{}, docid string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	callWriteHook(doc)

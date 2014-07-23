@@ -29,6 +29,11 @@ func (db *CouchDB) GetAttachment(docid, attname, query string) (io.Reader, error
 	return db.getRaw(escape_docid(docid)+"/"+escape_docid(attname), query)
 }
 
+// A slightly different flavour of the db.GetAttachment method
+func (doc *BasicDocument) GetAttachment(db *CouchDB, attname, query string) (io.Reader, error) {
+	return db.getRaw(escape_docid(doc.ID)+"/"+escape_docid(attname), query)
+}
+
 // Accepts a struct or a map[string]something to fill with the doc's data, and a docid path relative to the database, returns error status
 func (db *CouchDB) GetDocument(doc interface{}, docid string) error {
 	return db.get(doc, escape_docid(docid), "")
