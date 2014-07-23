@@ -45,9 +45,8 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	return &s, nil
 }
 
-func (db *CouchDB) PutAttachment(doc interface{}, docid string, docrev string, attachment io.Reader, attname string, ctype string) (*CouchSuccess, error) {
+func (db *CouchDB) PutAttachment(docid string, docrev string, attachment io.Reader, attname string, ctype string) (*CouchSuccess, error) {
 	var s CouchSuccess
-	callWriteHook(doc)
 	req, err := db.createRequest("PUT", escape_docid(docid)+"/"+escape_docid(attname), "rev="+docrev, attachment)
 	if err != nil {
 		return nil, err
