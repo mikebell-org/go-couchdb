@@ -31,7 +31,9 @@ func floatTime(t time.Time) (r float64) {
 }
 
 func (d *BasicDocumentWithMtime) CouchDocPreWrite() {
-	now := floatTime(time.Now())
+	loc, _ := time.LoadLocation("UTC")
+
+	now := floatTime(time.Now().In(loc))
 	if d.Created == 0 {
 		d.Created = now
 	}
