@@ -158,7 +158,7 @@ func TestMain(t *testing.T) {
 	// Attachment tests
 	if err = db.GetDocument(&doc, WeirdDocIDs[0]); err == nil {
 
-		if _, err := db.PutAttachment(doc.ID, doc.Rev, bytes.NewBufferString(test_attachment), "testAttachment", "text/plain"); err != nil {
+		if success, err := db.PutAttachment(doc.ID, doc.Rev, bytes.NewBufferString(test_attachment), "testAttachment", "text/plain"); err != nil {
 
 			t.Fatalf("Failed to put attachment: %v", err)
 		} else {
