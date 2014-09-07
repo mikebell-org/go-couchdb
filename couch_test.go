@@ -158,9 +158,12 @@ func TestMain(t *testing.T) {
 	// Attachment tests
 	if err = db.GetDocument(&doc, WeirdDocIDs[0]); err == nil {
 
-		if _, err := db.PutAttachment(doc, doc.ID, doc.Rev, bytes.NewBufferString(test_attachment), "testAttachment", "text/plain"); err != nil {
+		if success, err := db.PutAttachment(doc.ID, doc.Rev, bytes.NewBufferString(test_attachment), "testAttachment", "text/plain"); err != nil {
 
 			t.Fatalf("Failed to put attachment: %v", err)
+		} else {
+
+			doc.Rev = success.Rev
 		}
 
 		if r, err := db.GetAttachment(doc.ID, "testAttachment", ""); err == nil {
@@ -178,6 +181,11 @@ func TestMain(t *testing.T) {
 		} else {
 
 			t.Fatalf("Failed to get attachment from DB: %v", err)
+		}
+
+		if _, err := db.DeleteAttachment(doc.ID, doc.Rev, "testAttachment"); err != nil {
+
+			t.Fatalf("Failed to delete attachment: %v", err)
 		}
 
 		fmt.Printf("Attachment tests passed\n")

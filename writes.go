@@ -45,6 +45,33 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 	return &s, nil
 }
 
+func (db *CouchDB) DeleteAttachment(docid string, docrev string, attname string) (*CouchSuccess, error) {
+	var s CouchSuccess
+	req, err := db.createRequest("DELETE", escape_docid(docid)+"/"+escape_docid(attname), "rev="+docrev, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, cerr := couchDo(req, &s)
+	if cerr != nil {
+		return nil, cerr
+	}
+	return &s, nil
+}
+
+// A slightly different flavour of the db.PutAttachment method
+func (doc *BasicDocument) DeleteAttachment(db *CouchDB, attname string) (*CouchSuccess, error) {
+	var s CouchSuccess
+	req, err := db.createRequest("DELETE", escape_docid(doc.ID)+"/"+escape_docid(attname), "rev="+doc.Rev, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, cerr := couchDo(req, &s)
+	if cerr != nil {
+		return nil, cerr
+	}
+	return &s, nil
+}
+
 func (db *CouchDB) PutAttachment(docid string, docrev string, attachment io.Reader, attname string, ctype string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	req, err := db.createRequest("PUT", escape_docid(docid)+"/"+escape_docid(attname), "rev="+docrev, attachment)
