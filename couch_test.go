@@ -117,10 +117,22 @@ func TestMain(t *testing.T) {
 	fmt.Printf("%+v\n", results)
 	fmt.Printf("Stage 5 complete\n")
 
+	if success, err := db.CopyDocument(PostSuccess.ID, PostSuccess.ID+"-copy"); err != nil {
+
+		t.Fatalf("Error copying doc [%s -> %s]: %s", PostSuccess.ID, PostSuccess.ID+"-copy", err)
+	} else {
+
+		change = changeOrErr()
+		if change.ID != success.ID {
+			t.Errorf("Change I got from the changes API didn't match what I got from my COPY")
+		}
+	}
+	fmt.Printf("Stage 6 complete\n")
+
 	if _, err = db.DeleteDocument(PostSuccess.ID, PutSuccess.Rev); err != nil {
 		t.Fatalf("Error deleting doc: %s", err)
 	}
-	fmt.Printf("Stage 6 complete\n")
+	fmt.Printf("Stage 7 complete\n")
 
 	change = changeOrErr()
 	if change.ID != PostSuccess.ID {

@@ -142,6 +142,24 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 	return &s, nil
 }
 
+func (db *CouchDB) CopyDocument(docid, copyid string) (*CouchSuccess, error) {
+	var s CouchSuccess
+	req, err := db.createRequest("COPY", docid, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Destination", copyid)
+	code, cerr := couchDo(req, &s)
+	if cerr != nil {
+		return nil, cerr
+	}
+	if code != 201 {
+		// FIXME Unexpected code. Do something?
+	}
+	return &s, nil
+}
+
 func (db *CouchDB) DeleteDocument(docid, rev string) (*CouchSuccess, error) {
 	var s CouchSuccess
 	req, err := db.createRequest("DELETE", escape_docid(docid), fmt.Sprintf("rev=%s", rev), nil)
