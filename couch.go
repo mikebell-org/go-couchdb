@@ -28,6 +28,7 @@ func (db *CouchDB) createRequest(method, urlpath, querystring string, body io.Re
 	if db.Username != "" {
 		r.SetBasicAuth(db.Username, db.Password)
 	}
+	r.Header.Set("Accept", "application/json")
 	return
 }
 

@@ -8,6 +8,7 @@ type Attachment struct {
 	Digest      string `json:"digest"`
 	Length      uint64 `json:"length"`
 	Stub        bool   `json:"stub"`
+	Data        string `json:"data"`
 }
 
 // A minimal document you can embed into your document structs

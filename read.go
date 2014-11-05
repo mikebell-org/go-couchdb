@@ -43,3 +43,8 @@ func (db *CouchDB) GetDocument(doc interface{}, docid string) error {
 func (db *CouchDB) GetDocumentAtRev(doc interface{}, docid, rev string) error {
 	return db.get(doc, escape_docid(docid), rev)
 }
+
+// Accepts a struct or a map[string]something to fill with the doc's data, and a docid path relative to the database, returns error status
+func (db *CouchDB) GetDocumentWithOpts(doc interface{}, docid, query string) error {
+	return db.get(doc, escape_docid(docid), query)
+}

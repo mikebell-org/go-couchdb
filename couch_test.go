@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -193,6 +194,30 @@ func TestMain(t *testing.T) {
 		} else {
 
 			t.Fatalf("Failed to get attachment from DB: %v", err)
+		}
+
+		var d testdoc
+		if err := db.GetDocumentWithOpts(&d, doc.ID, "attachments=true"); err != nil {
+
+			t.Fatalf("Failed to get bulk attachments from DB: %v", err)
+		}
+
+		if len(d.Attachments) != 1 {
+
+			t.Fatalf("Got %d attachments, instead of 1", len(d.Attachments))
+		}
+
+		if d.Attachments["testAttachment"].ContentType != "text/plain" {
+
+			t.Fatalf("Got a content-type of %s, instead of text/plain", d.Attachments["testAttachment"].ContentType)
+		}
+
+		if data, err := base64.StdEncoding.DecodeString(d.Attachments["testAttachment"].Data); err != nil {
+
+			t.Fatalf("Failed to get bulk attachments from DB: %v", err)
+		} else if string(data) != test_attachment {
+
+			t.Fatalf("Attachment contents do not match:\nReceived:\n%#v\n\nExpected:\n%#v", string(data), test_attachment)
 		}
 
 		if _, err := db.DeleteAttachment(doc.ID, doc.Rev, "testAttachment"); err != nil {
