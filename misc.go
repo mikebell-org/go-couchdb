@@ -12,6 +12,7 @@ type CouchInfo struct {
 	PurgeSeq           int         `json:"purge_seq"`
 	CompactRunning     bool        `json:"compact_running"`
 	DiskSize           int         `json:"disk_size"`
+	DataSize           int         `json:"data_size"`
 	InstanceStartTime  string      `json:"instance_start_time"`
 	DiskFormatVersion  int         `json:"disk_format_version"`
 	CommittedUpdateSeq int         `json:"committed_update_seq"`
