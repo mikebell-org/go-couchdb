@@ -47,6 +47,9 @@ func (db *CouchDB) BulkUpdate(c *BulkCommit) (*BulkCommitResponse, error) {
 
 func (db *CouchDB) PutAttachment(docid string, docrev string, attachment io.Reader, attname string, ctype string) (*CouchSuccess, error) {
 	var s CouchSuccess
+	if docid == "" {
+		return nil, MissingDocumentIDError
+	}
 	req, err := db.createRequest("PUT", escape_docid(docid)+"/"+escape_docid(attname), "rev="+docrev, attachment)
 	if err != nil {
 		return nil, err
@@ -63,6 +66,9 @@ func (db *CouchDB) PutDocument(doc interface{}, docid string) (*CouchSuccess, er
 	var s CouchSuccess
 	callWriteHook(doc)
 	r, errCh := jsonifyDoc(doc)
+	if docid == "" {
+		return nil, MissingDocumentIDError
+	}
 	req, err := db.createRequest("PUT", escape_docid(docid), "", r)
 	if err != nil {
 		return nil, err
@@ -102,6 +108,9 @@ func (db *CouchDB) PostDocument(doc interface{}) (*CouchSuccess, error) {
 
 func (db *CouchDB) DeleteDocument(docid, rev string) (*CouchSuccess, error) {
 	var s CouchSuccess
+	if docid == "" {
+		return nil, MissingDocumentIDError
+	}
 	req, err := db.createRequest("DELETE", escape_docid(docid), fmt.Sprintf("rev=%s", rev), nil)
 	if err != nil {
 		return nil, err
