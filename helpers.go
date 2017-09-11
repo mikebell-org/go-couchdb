@@ -8,10 +8,10 @@ import (
 	"net/http"
 )
 
-var client http.Client
+var DefaultClient http.Client
 
 func init() {
-	client = http.Client{Transport: &http.Transport{Dial: keepAliveDial}}
+	DefaultClient = http.Client{Transport: &http.Transport{Dial: keepAliveDial}}
 }
 
 func keepAliveDial(nett, addr string) (c net.Conn, err error) {
@@ -40,7 +40,7 @@ func jsonifyDoc(doc interface{}) (io.Reader, chan error) {
 }
 
 func couchDo(req *http.Request, response interface{}) (int, error) {
-	r, err := client.Do(req)
+	r, err := DefaultClient.Do(req)
 	if err != nil {
 		return 0, err
 	}

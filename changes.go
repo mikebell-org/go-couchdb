@@ -64,7 +64,7 @@ func (db *CouchDB) ContinuousChanges(args ChangesArgs) (<-chan *DocRev, <-chan e
 		e <- err
 		return nil, e
 	}
-	r, err := client.Do(req)
+	r, err := DefaultClient.Do(req)
 	if err != nil {
 		e <- err
 		return nil, e

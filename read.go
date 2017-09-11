@@ -9,7 +9,7 @@ func (db *CouchDB) getRaw(path, query string) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.Do(req)
+	r, err := DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
