@@ -17,6 +17,13 @@ type Rev struct {
 	Rev string `json:"rev"`
 }
 
+type NormalChanges struct{
+    Results []DocRev    `json:"results"`
+    LastSeq interface{} `json:"last_seq"`
+    Pending uint64 `json:"pending"`
+}
+
+
 type ChangesArgs struct {
 	Since       interface{}     `urlencode:"since"`
 	Limit       uint64          `urlencode:"limit"`
@@ -39,11 +46,36 @@ type Changes struct {
 	LastSeq interface{} `json:"last_seq"`
 }
 
-func (db *CouchDB) Changes(args ChangesArgs) (*Changes, error) {
+
+// Returns the normal changes feed. The output is different the continuous changes, it is one massive Json giving all *existing* changes from inception of the database or from the sequence number given in the ChangesArgs.  
+func (db *CouchDB) Changes(args ChangesArgs,returnChange * NormalChanges) ( error) {
 	if args.Feed == "continuous" {
-		return nil, fmt.Errorf("Changes is for non-continuous feeds. Try ContinuousChanges instead")
+		return fmt.Errorf("Changes is for normal or long-polling, try ContinuousChanges instead")
 	}
-	panic("Not implemented yet")
+
+	argsstring, err := args.Encode()
+	if err != nil {
+		return err
+	}
+	req, err := db.createRequest("GET", "_changes", argsstring, nil)
+	if err != nil {
+		return  err
+	}
+	r, err := client.Do(req)
+	if err != nil {
+		return  err
+	}
+    fmt.Println("incc3")
+	if r.StatusCode != 200 {
+		r.Body.Close()
+		return responseToCouchError(r)
+	}
+	j := json.NewDecoder(r.Body)
+    err = j.Decode(returnChange)
+    if err != nil{
+        return err
+    }
+	return nil
 }
 
 // ContinuousChanges starts a feed=continuous view of the _changes feed for the DB.
@@ -52,7 +84,7 @@ func (db *CouchDB) Changes(args ChangesArgs) (*Changes, error) {
 // will spit out the appropriate error
 func (db *CouchDB) ContinuousChanges(args ChangesArgs) (<-chan *DocRev, <-chan error) {
 	c := make(chan *DocRev)
-	e := make(chan error, 1)
+	e := make(chan error,1)
 	args.Feed = "continuous"
 	argsstring, err := args.Encode()
 	if err != nil {
