@@ -1,6 +1,7 @@
 package couchdb
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -19,13 +20,17 @@ type CouchInfo struct {
 }
 
 // Returns information about the database, can also be used to verify its existence
-func (db *CouchDB) Info() (info *CouchInfo, err error) {
-	info = new(CouchInfo)
-	err = db.GetDocument(&info, "")
+func (db *CouchDB) Info() (_ *CouchInfo, err error) {
+	var info CouchInfo
+	b, err := db.GetRaw("", "")
 	if err != nil {
 		return
 	}
-	return
+	var r = json.NewDecoder(b)
+	if err = r.Decode(&info); err != nil {
+		return nil, err
+	}
+	return &info, nil
 }
 
 // Starts compaction on a database
